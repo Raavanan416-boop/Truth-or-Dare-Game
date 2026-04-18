@@ -2,35 +2,36 @@
   "name": "SpinCircle — Truth or Dare",
   "short_name": "SpinCircle",
   "description": "Real-time multiplayer Truth or Dare party game with video, voice and chat",
-  "start_url": "/spincircle/",
-  "scope": "/spincircle/",
+
+  "start_url": "./",
+  "scope": "./",
+
   "display": "standalone",
   "background_color": "#0a0a14",
   "theme_color": "#a78bfa",
   "orientation": "portrait-primary",
-  "categories": ["games", "social", "entertainment"],
+
   "icons": [
     {
       "src": "icon1.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icon2.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ],
+
   "shortcuts": [
     {
       "name": "Play Offline",
-      "url": "/spincircle/?mode=offline"
+      "url": "./?mode=offline"
     },
     {
       "name": "Join Online",
-      "url": "/spincircle/?mode=online"
+      "url": "./?mode=online"
     }
   ]
 }
