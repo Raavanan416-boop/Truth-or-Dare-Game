@@ -2,7 +2,7 @@
   "name": "SpinCircle — Truth or Dare",
   "short_name": "SpinCircle",
   "description": "Real-time multiplayer Truth or Dare party game with video, voice and chat",
-  "start_url": "/",
+  "start_url": "https://raavanan416-boop.github.io/Truth-or-Dare-Game/",
   "display": "standalone",
   "background_color": "#0a0a14",
   "theme_color": "#a78bfa",
