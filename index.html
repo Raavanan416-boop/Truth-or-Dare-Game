@@ -23,6 +23,9 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
+/* Disable text selection & long-press menu in game UI */
+#page-game,#page-game *:not(.reaction-picker):not(.reaction-picker *):not(.msg-reaction):not(.inp){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#page-game .inp,#page-game textarea{-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default}
 #bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
 .page{display:none;position:relative;z-index:1;min-height:100vh}
 .page.active{display:flex}
@@ -317,6 +320,8 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .leave-card p{font-size:.88rem;color:var(--m1);margin-bottom:1.5rem}
 .leave-btns{display:flex;gap:.7rem;justify-content:center}
 .leave-btns .btn{min-width:100px}
+#ov-min-players{position:fixed;inset:0;z-index:9991;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;backdrop-filter:blur(12px);padding:1rem}
+#ov-min-players.show{display:flex}
 
 /* RECONNECTING BANNER */
 #reconnect-banner{position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,rgba(251,191,36,.95),rgba(245,158,11,.95));color:#000;text-align:center;padding:.55rem 1rem;font-size:.84rem;font-weight:600;display:none;align-items:center;justify-content:center;gap:.5rem;animation:reconIn .3s ease}
@@ -348,11 +353,27 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .notif-badge.show{display:flex}
 
 .hidden{display:none!important}
+
+/* JOIN REQUEST POPUP */
+#join-requests-container{position:fixed;top:4.5rem;right:1rem;z-index:9000;display:flex;flex-direction:column;gap:.5rem;max-width:320px;pointer-events:none}
+.join-request-card{pointer-events:auto;background:rgba(10,10,20,.97);border:1px solid var(--b2);border-radius:var(--r2);padding:1rem;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.6);animation:nfIn .3s ease}
+.join-request-card .jr-name{font-size:.92rem;font-weight:700;color:var(--pu);margin-bottom:.1rem}
+.join-request-card .jr-msg{font-size:.78rem;color:var(--m1);margin-bottom:.7rem}
+.join-request-card .jr-btns{display:flex;gap:.5rem}
+.join-request-card .jr-btns .btn{flex:1;font-size:.78rem;padding:.45rem .6rem}
+
+/* REACTION DETAIL POPUP */
+.reaction-detail-popup{position:fixed;z-index:9500;background:rgba(10,10,20,.97);border:1px solid var(--b2);border-radius:var(--r2);padding:.7rem 1rem;min-width:140px;max-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:scIn .2s ease}
+.reaction-detail-popup .rdp-title{font-size:.88rem;margin-bottom:.4rem;display:flex;align-items:center;gap:.3rem}
+.reaction-detail-popup .rdp-list{display:flex;flex-direction:column;gap:.2rem}
+.reaction-detail-popup .rdp-item{font-size:.78rem;color:var(--m1);padding:.15rem 0}
 </style>
 </head>
 <body>
 <canvas id="bgc"></canvas>
 <div id="nc"></div>
+<div id="join-requests-container"></div>
+<div id="reaction-detail-popup" class="reaction-detail-popup" style="display:none"></div>
 
 <!-- Leave Confirm Overlay -->
 <div id="ov-leave-confirm">
@@ -362,6 +383,17 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
     <div class="leave-btns">
       <button class="btn brd" onclick="confirmLeaveYes()">Yes, Leave</button>
       <button class="btn bp" onclick="confirmLeaveNo()">No, Stay</button>
+    </div>
+  </div>
+</div>
+
+<!-- Min Players Overlay -->
+<div id="ov-min-players">
+  <div class="leave-card">
+    <h3>⚠️ Not Enough Players</h3>
+    <p>Minimum 3 players required to continue.<br>Returning to lobby…</p>
+    <div class="leave-btns">
+      <button class="btn bp" onclick="dismissMinPlayers()">OK</button>
     </div>
   </div>
 </div>
@@ -493,8 +525,8 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
         <div class="topbar-logo">SpinCircle</div>
         <div class="topbar-right">
           <div class="room-pill hidden" id="game-room-pill"></div>
-          <!-- Players button -->
-          <button class="btn bs btn-sm" id="btn-players" onclick="openPlayerList()" style="display:none;font-size:.72rem;padding:.3rem .65rem">👥 Players</button>
+          <!-- Players button with live count -->
+          <button class="btn bs btn-sm" id="btn-players" onclick="openPlayerList()" style="display:none;font-size:.72rem;padding:.3rem .65rem">👥 <span id="game-player-count">0</span></button>
           <button class="bic" onclick="leaveGame()" title="Leave" style="font-size:.85rem">✕</button>
         </div>
       </div>
@@ -686,11 +718,23 @@ function dbg(...args) {
 ═══════════════════════════════════════ */
 function saveSession(){
   if(mode!=='online'||!room||!myId)return;
-  sessionStorage.setItem('sc_session',JSON.stringify({room,myId,myName,isHost,mode}));
+  const data=JSON.stringify({room,myId,myName,isHost,mode});
+  sessionStorage.setItem('sc_session',data);
+  localStorage.setItem('sc_rejoin',data);
 }
-function clearSession(){ sessionStorage.removeItem('sc_session'); }
+function clearSession(){
+  sessionStorage.removeItem('sc_session');
+  localStorage.removeItem('sc_rejoin');
+}
 function getSavedSession(){
-  try{return JSON.parse(sessionStorage.getItem('sc_session'));}catch(e){return null;}
+  try{
+    // Try sessionStorage first (same-tab), then localStorage (cross-tab/refresh)
+    const ss = sessionStorage.getItem('sc_session');
+    if(ss) return JSON.parse(ss);
+    const ls = localStorage.getItem('sc_rejoin');
+    if(ls) return JSON.parse(ls);
+    return null;
+  }catch(e){return null;}
 }
 
 /* ═══════════════════════════════════════
@@ -719,7 +763,17 @@ window.confirmLeaveNo = ()=>{
 async function actualLeaveGame(){
   if(mode==='online'&&room&&myId) await remove(ref(db,`rooms/${room}/players/${myId}`));
   stopVoice(); stopVideo();
+  // Detach all Firebase listeners
+  if(room){
+    try{ off(ref(db,`rooms/${room}/game`)); }catch(e){}
+    try{ off(ref(db,`rooms/${room}/chat`)); }catch(e){}
+    try{ off(ref(db,`rooms/${room}/players`)); }catch(e){}
+    try{ off(ref(db,`rooms/${room}/state`)); }catch(e){}
+    try{ off(ref(db,`rooms/${room}/joinRequests`)); }catch(e){}
+  }
+  clearSession();
   room=''; myId=''; isHost=false; knownPlayers={}; players=[]; inGamePage=false;
+  _notifiedLeaves.clear(); _notifiedJoins.clear(); _pendingRequests.clear();
   showPage('page-mode');
 }
 
@@ -924,6 +978,8 @@ window.createRoom=async()=>{
   await set(pr,{name:myName,joined:serverTimestamp()});
   onDisconnect(pr).remove();
   document.getElementById('wait-room-code').textContent=room;
+  // Save rejoin data to localStorage
+  localStorage.setItem('sc_rejoin',JSON.stringify({room,myId,myName,isHost:true}));
   showPage('page-waiting'); listenWaitingRoom();
 };
 
@@ -931,15 +987,44 @@ window.joinRoom=async()=>{
   if(!checkFB())return;
   const c=document.getElementById('inp-room').value.trim().toUpperCase();
   if(c.length<4){notify('Enter a valid room code','w');return;}
-  room=c; myId=push(ref(db,'_t')).key; isHost=false;
-  const sn=await get(ref(db,`rooms/${room}`));
+  const tempRoom=c;
+  const sn=await get(ref(db,`rooms/${tempRoom}`));
   if(!sn.exists()){notify('Room not found!','e');return;}
-  if(sn.val().state==='playing'){notify('Game already in progress!','w');return;}
-  const pr=ref(db,`rooms/${room}/players/${myId}`);
-  await set(pr,{name:myName,joined:serverTimestamp()});
-  onDisconnect(pr).remove();
-  document.getElementById('wait-room-code').textContent=room;
-  showPage('page-waiting'); listenWaitingRoom();
+  const roomState=sn.val().state;
+
+  if(roomState==='playing'){
+    // ── GAME ALREADY STARTED → send join request for approval ──
+    const tempId=push(ref(db,'_t')).key;
+    await set(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}`),{name:myName,ts:Date.now()});
+    notify('Game in progress — join request sent to host…','i');
+    onValue(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}/status`),async snap=>{
+      const status=snap.val();
+      if(status==='accepted'){
+        off(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}/status`));
+        room=tempRoom; myId=tempId; isHost=false; mode='online';
+        const pr=ref(db,`rooms/${room}/players/${myId}`);
+        await set(pr,{name:myName,joined:serverTimestamp()});
+        onDisconnect(pr).remove();
+        notify('Accepted! Joining game… ✅','s');
+        localStorage.setItem('sc_rejoin',JSON.stringify({room,myId,myName,isHost:false}));
+        await loadOnlineGame();
+      } else if(status==='rejected'){
+        off(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}/status`));
+        notify('Your join request was denied ❌','e');
+        await remove(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}`));
+      }
+    });
+  } else {
+    // ── BEFORE GAME STARTS → join directly, no approval ──
+    room=tempRoom; myId=push(ref(db,'_t')).key; isHost=false;
+    const pr=ref(db,`rooms/${room}/players/${myId}`);
+    await set(pr,{name:myName,joined:serverTimestamp()});
+    onDisconnect(pr).remove();
+    document.getElementById('wait-room-code').textContent=room;
+    localStorage.setItem('sc_rejoin',JSON.stringify({room,myId,myName,isHost:false}));
+    showPage('page-waiting'); listenWaitingRoom();
+    notify('Joined the room! ✅','s');
+  }
 };
 
 function listenWaitingRoom(){
@@ -953,6 +1038,45 @@ function listenWaitingRoom(){
   onValue(ref(db,`rooms/${room}/state`),sn=>{if(sn.val()==='playing')loadOnlineGame();});
 }
 
+/* ── Join Request System (Host-side) ── */
+let _pendingRequests = new Set();
+function listenJoinRequests(){
+  onValue(ref(db,`rooms/${room}/joinRequests`),sn=>{
+    const reqs=sn.val()||{};
+    const container=document.getElementById('join-requests-container');
+    Object.entries(reqs).forEach(([reqId,reqData])=>{
+      if(_pendingRequests.has(reqId)) return; // already showing
+      if(reqData.status) return; // already handled
+      _pendingRequests.add(reqId);
+      const card=document.createElement('div');
+      card.className='join-request-card';
+      card.id=`jr-${reqId}`;
+      card.innerHTML=`<div class="jr-name">👤 ${esc(reqData.name)}</div>
+        <div class="jr-msg">wants to join the room</div>
+        <div class="jr-btns">
+          <button class="btn bgn" onclick="approveJoin('${reqId}')">✓ Accept</button>
+          <button class="btn brd" onclick="rejectJoin('${reqId}')">✕ Reject</button>
+        </div>`;
+      container.appendChild(card);
+      sfx('pop');
+    });
+  });
+}
+
+window.approveJoin=async(reqId)=>{
+  await update(ref(db,`rooms/${room}/joinRequests/${reqId}`),{status:'accepted'});
+  document.getElementById(`jr-${reqId}`)?.remove();
+  _pendingRequests.delete(reqId);
+  notify('Player accepted ✅','s');
+};
+
+window.rejectJoin=async(reqId)=>{
+  await update(ref(db,`rooms/${room}/joinRequests/${reqId}`),{status:'rejected'});
+  document.getElementById(`jr-${reqId}`)?.remove();
+  _pendingRequests.delete(reqId);
+  notify('Player rejected','w');
+};
+
 window.hostStart=async()=>{
   const sn=await get(ref(db,`rooms/${room}/players`));
   const names=Object.values(sn.val()||{}).map(p=>p.name);
@@ -962,7 +1086,14 @@ window.hostStart=async()=>{
 };
 
 window.copyRoomCode=()=>navigator.clipboard.writeText(room).then(()=>notify('Room code copied!','s'));
-window.leaveRoom=async()=>{if(room&&myId)await remove(ref(db,`rooms/${room}/players/${myId}`));room='';myId='';isHost=false;showPage('page-online-lobby');};
+window.leaveRoom=async()=>{
+  if(room&&myId) await remove(ref(db,`rooms/${room}/players/${myId}`));
+  try{ off(ref(db,`rooms/${room}/players`)); }catch(e){}
+  try{ off(ref(db,`rooms/${room}/state`)); }catch(e){}
+  clearSession();
+  room=''; myId=''; isHost=false;
+  showPage('page-online-lobby');
+};
 
 async function loadOnlineGame(){
   off(ref(db,`rooms/${room}/state`));
@@ -976,39 +1107,60 @@ async function loadOnlineGame(){
   PT.init(players);
   initGameScreen(true);
   listenGameState(); listenChat(); listenPlayers(); listenReactions();
+  // Host: listen for mid-game join requests
+  if(isHost) listenJoinRequests();
+  // All: listen for room state changes (e.g. paused due to <3 players)
+  listenRoomStateDuringGame();
   addSysMsg('Game started! 🍾');
   saveSession();
 }
 
 /* ── Listen for player join/leave (KEEPS knownPlayers fresh) ── */
+let _notifiedLeaves = new Set(); // prevent duplicate "Player Left" messages
+let _notifiedJoins = new Set();
 function listenPlayers(){
   onValue(ref(db,`rooms/${room}/players`),async sn=>{
     const now=sn.val()||{};
     const nowNames = Object.values(now).map(p=>p.name);
-    // Join notifications
+    const nowIds = new Set(Object.keys(now));
+    // Join notifications — only once per unique ID
     Object.entries(now).forEach(([id,p])=>{
-      if(!knownPlayers[id]&&Object.keys(knownPlayers).length>0){
+      if(!knownPlayers[id]&&Object.keys(knownPlayers).length>0&&!_notifiedJoins.has(id)){
+        _notifiedJoins.add(id);
         gameNotify(`${p.name} joined the room`,'s'); addSysMsg(`${p.name} joined`);
       }
     });
-    // Leave notifications + auto-skip if leaver is current spinner/target
+    // Leave notifications — only once per unique ID
     Object.entries(knownPlayers).forEach(([id,p])=>{
-      if(!now[id]){
+      if(!now[id]&&!_notifiedLeaves.has(id)){
+        _notifiedLeaves.add(id);
         gameNotify(`${p.name} left the room`,'w'); addSysMsg(`${p.name} left`);
       }
     });
+    // Clean up old tracked IDs that rejoined
+    _notifiedLeaves.forEach(id=>{ if(nowIds.has(id)) _notifiedLeaves.delete(id); });
+    _notifiedJoins.forEach(id=>{ if(!nowIds.has(id)) _notifiedJoins.delete(id); });
+
     knownPlayers=now;
     // Update players list with currently connected players
     if(nowNames.length > 0) players = nowNames;
+
+    // ═══ MINIMUM 3 PLAYERS CHECK ═══
+    // If players drop below 3, host pauses the game → all return to lobby
+    if(isHost && nowNames.length < 3 && nowNames.length > 0){
+      addSysMsg('⚠️ Less than 3 players — game paused.');
+      await update(ref(db,`rooms/${room}`),{state:'waiting'});
+      return; // listenRoomStateDuringGame will handle the UI transition
+    }
+
     // ── AUTO-SKIP: if spinner or target left, advance game ──
-    if(isHost && nowNames.length >= 2){
+    if(isHost && nowNames.length >= 3){
       const gs = await get(ref(db,`rooms/${room}/game`));
       const g = gs.val();
       if(g){
         const spinnerGone = g.spinner && !nowNames.includes(g.spinner);
         const targetGone = g.target && !nowNames.includes(g.target);
         if(spinnerGone){
-          // Pick a new spinner from remaining players
           const newSpinner = nowNames[Math.floor(Math.random()*nowNames.length)];
           await update(ref(db,`rooms/${room}/game`),{
             spinner:newSpinner, target:null, type:null, phase:'idle',
@@ -1016,7 +1168,6 @@ function listenPlayers(){
           });
           addSysMsg(`${g.spinner} left — ${newSpinner} is now spinning!`);
         } else if(targetGone && (g.phase==='spun'||g.phase==='chosen')){
-          // Target left mid-turn, reset to idle so spinner can re-spin
           await update(ref(db,`rooms/${room}/game`),{
             target:null, type:null, phase:'idle', spinTrigger:null, chatPhase:null
           });
@@ -1024,9 +1175,46 @@ function listenPlayers(){
         }
       }
     }
-    renderVoiceUserList(); // refresh voice list with updated names
+    // Update live player count in topbar
+    const countEl=document.getElementById('game-player-count');
+    if(countEl) countEl.textContent=nowNames.length;
+    renderVoiceUserList();
   });
 }
+
+/* ── Listen for room state changes during active game ── */
+function listenRoomStateDuringGame(){
+  onValue(ref(db,`rooms/${room}/state`),sn=>{
+    const st=sn.val();
+    if(st==='waiting' && inGamePage){
+      // Game was paused (e.g. <3 players) → return everyone to lobby
+      returnToLobby();
+    }
+  });
+}
+
+/* ── Return all players to the waiting lobby ── */
+function returnToLobby(){
+  // Show the min-players overlay
+  document.getElementById('ov-min-players').classList.add('show');
+  // Stop voice/video
+  stopVoice(); stopVideo();
+  // Clean up game state listeners
+  try{ off(ref(db,`rooms/${room}/game`)); }catch(e){}
+  try{ off(ref(db,`rooms/${room}/chat`)); }catch(e){}
+  try{ off(ref(db,`rooms/${room}/players`)); }catch(e){}
+  try{ off(ref(db,`rooms/${room}/state`)); }catch(e){}
+  inGamePage=false;
+  _notifiedLeaves.clear(); _notifiedJoins.clear();
+}
+
+window.dismissMinPlayers=()=>{
+  document.getElementById('ov-min-players').classList.remove('show');
+  // Re-enter the waiting room
+  document.getElementById('wait-room-code').textContent=room;
+  showPage('page-waiting');
+  listenWaitingRoom();
+};
 
 /* ═══════════════════════════════════════════════════
    GAME SCREEN INIT — only called once per game start
@@ -1041,6 +1229,9 @@ function initGameScreen(online){
 
   // Show Players button for both modes
   document.getElementById('btn-players').style.display='';
+  // Set initial player count
+  const countEl=document.getElementById('game-player-count');
+  if(countEl) countEl.textContent=players.length;
 
   // ── RESET only game-session state, NOT players list ──
   gameHistory=[];
@@ -1330,7 +1521,7 @@ function animBottleToAngle(absAngle,durationMs,onDone){
   sfx('spin');
   setTimeout(()=>{
     svg.classList.remove('spin-anim');
-    spinning=false;
+    spinning=false; 
     dbg('animBottleToAngle done, angle=',absAngle);
     onDone?.();
   },durationMs);
@@ -1374,14 +1565,38 @@ function listenGameState(){
 
     renderGame();
 
-    // Auto-open chat for Q&A flow — ONLY when chatPhase transitions (not on nextTurn)
-    if(G.chatPhase==='q' && G.spinner===myName && prevPhase!=='idle'){
-      setTab('chat');document.getElementById('sidebar').classList.add('open');document.getElementById('chat-inp').focus();
+    // Auto-open chat for Q&A flow — ONLY when chatPhase transitions
+    const prevChatPhase = prevPhase==='idle' ? null : undefined; // don't trigger on initial load
+    if(G.chatPhase==='q' && G.spinner===myName && prevChatPhase!==undefined){
+      // Spinner: auto-open chat to ask question
+      setTab('chat');
+      const sb=document.getElementById('sidebar');
+      sb.classList.add('open');
+      const fab=document.querySelector('.mob-chat-btn');
+      if(fab) fab.classList.add('sidebar-open');
+      setTimeout(()=>document.getElementById('chat-inp').focus(),200);
       gameNotify('Your turn to ask a question!','i');
     }
-    if(G.chatPhase==='a' && G.target===myName && prevPhase!=='idle'){
-      setTab('chat');document.getElementById('sidebar').classList.add('open');document.getElementById('chat-inp').focus();
+    if(G.chatPhase==='a' && G.target===myName){
+      // Target: auto-open chat to answer
+      setTab('chat');
+      const sb=document.getElementById('sidebar');
+      sb.classList.add('open');
+      const fab=document.querySelector('.mob-chat-btn');
+      if(fab) fab.classList.add('sidebar-open');
+      setTimeout(()=>document.getElementById('chat-inp').focus(),200);
       gameNotify('Your turn to answer!','i');
+    }
+    if(G.chatPhase===null && g.phase==='chosen'){
+      // Answer was sent — auto-close sidebar on mobile after short delay
+      setTimeout(()=>{
+        if(window.innerWidth<=700){
+          const sb=document.getElementById('sidebar');
+          sb.classList.remove('open');
+          const fab=document.querySelector('.mob-chat-btn');
+          if(fab) fab.classList.remove('sidebar-open');
+        }
+      },800);
     }
   });
   onValue(ref(db,`rooms/${room}/history`),sn=>{
@@ -1494,14 +1709,19 @@ function renderChatMessages(msgs){
     if(m.reactions){
       const grouped = {};
       Object.entries(m.reactions).forEach(([uid,emoji])=>{
-        if(!grouped[emoji]) grouped[emoji]={count:0,mine:false};
+        if(!grouped[emoji]) grouped[emoji]={count:0,mine:false,names:[]};
         grouped[emoji].count++;
         if(uid===myId) grouped[emoji].mine=true;
+        // Resolve user name from knownPlayers or fallback
+        const uname = uid===myId ? myName : (knownPlayers[uid]?.name || 'Someone');
+        grouped[emoji].names.push(uname);
       });
       reactionsHtml = '<div class="msg-reactions">' +
-        Object.entries(grouped).map(([emoji,d])=>
-          `<span class="msg-reaction${d.mine?' mine':''}" onclick="toggleReaction('${msgKey}','${emoji}')">`+
-          `<span class="r-emoji">${emoji}</span><span class="r-count">${d.count}</span></span>`
+        Object.entries(grouped).map(([emoji,d])=>{
+          const namesAttr = esc(d.names.join(','));
+          return `<span class="msg-reaction${d.mine?' mine':''}" onclick="handleReactionClick(event,'${msgKey}','${emoji}')" data-names="${namesAttr}">`+
+          `<span class="r-emoji">${emoji}</span><span class="r-count">${d.count}</span></span>`;
+        }
         ).join('') + '</div>';
     }
     return`<div class="msg ${align} ${tag}" data-msgkey="${msgKey}" style="position:relative">
@@ -1560,10 +1780,14 @@ function hideReactionPicker(){
   activeReactionPicker = null;
 }
 
-// Close picker on outside click
+// Close picker + reaction detail popup on outside click
 document.addEventListener('click', e=>{
   if(activeReactionPicker && !activeReactionPicker.contains(e.target)){
     hideReactionPicker();
+  }
+  const rdp = document.getElementById('reaction-detail-popup');
+  if(rdp && rdp.style.display!=='none' && !rdp.contains(e.target) && !e.target.closest('.msg-reaction')){
+    rdp.style.display='none';
   }
 });
 
@@ -1584,9 +1808,26 @@ window.toggleReaction = async(msgKey, emoji)=>{
   }
 };
 
+// Handle reaction click: show who reacted
+window.handleReactionClick = (event, msgKey, emoji)=>{
+  event.stopPropagation();
+  const el = event.currentTarget;
+  const names = (el.dataset.names||'').split(',').filter(Boolean);
+  if(names.length === 0) return;
+  // Show detail popup near the clicked element
+  const rdp = document.getElementById('reaction-detail-popup');
+  const rect = el.getBoundingClientRect();
+  rdp.innerHTML = `<div class="rdp-title"><span class="r-emoji" style="font-size:1.1rem">${emoji}</span> <span style="color:var(--m1);font-size:.78rem">${names.length}</span></div>
+    <div class="rdp-list">${names.map(n=>`<div class="rdp-item">• ${esc(n)}</div>`).join('')}</div>`;
+  rdp.style.display = 'block';
+  rdp.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
+  rdp.style.top = Math.max(0, rect.top - rdp.offsetHeight - 6) + 'px';
+  // Also toggle the reaction
+  toggleReaction(msgKey, emoji);
+};
+
 function listenReactions(){
   // Reactions are embedded in chat messages, so listenChat handles it
-  // This is a placeholder if we want separate reaction listeners later
 }
 
 window.sendChat=async()=>{
@@ -1623,7 +1864,7 @@ let vSigListeners={};
 
 window.joinVoice=async()=>{
   try{
-    lVoice=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    lVoice=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
     voiceMuted=false;
     document.getElementById('voice-status').textContent='🟢 Connected';
     document.getElementById('btn-join-voice').style.display='none';
@@ -1735,10 +1976,10 @@ function newVoicePC(pid){
   };
   pc.ontrack=e=>{
     console.log('[Voice] got remote track from',pid);
+    // Remove old audio element FIRST to prevent duplicate playback
+    document.getElementById(`vaudio-${pid}`)?.remove();
     const a=document.createElement('audio');a.autoplay=true;a.id=`vaudio-${pid}`;
     a.srcObject=e.streams[0];
-    // Remove old audio element if exists
-    document.getElementById(`vaudio-${pid}`)?.remove();
     document.body.appendChild(a);
     detectRemoteVoice(e.streams[0],pid);
   };
@@ -1853,7 +2094,7 @@ let vidIceAdded={}, vidSigListeners={};
 
 window.startVideo=async()=>{
   try{
-    lVideo=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+    lVideo=await navigator.mediaDevices.getUserMedia({video:true,audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     videoActive=true;camOff=false;vidMicOff=false;
     document.getElementById('vid-start-area').style.display='none';
     document.getElementById('vid-controls').classList.add('show');
@@ -2104,6 +2345,13 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
     await attemptRejoin();
   }
 })();
+
+// ── Prevent context menu (long-press copy/select/translate) in game page ──
+document.getElementById('page-game').addEventListener('contextmenu', e=>{
+  // Allow context menu on inputs and textareas
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  e.preventDefault();
+});
 </script>
 </body>
 </html>
