@@ -256,8 +256,8 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .msg.ask .msg-name{color:var(--am)}
 .msg.ans .msg-name{color:var(--pk)}
 .chat-typing{padding:.25rem .75rem;font-size:.7rem;color:var(--m1);border-top:1px solid var(--b1);min-height:24px}
-.chat-input{padding:.55rem .65rem;border-top:1px solid var(--b1);display:flex;gap:.38rem;flex-shrink:0}
-.chat-input .inp{flex:1;font-size:.84rem;margin-bottom:0;border-radius:10px;padding:.48rem .78rem}
+.chat-input{padding:.55rem .65rem;border-top:1px solid var(--b1);display:flex;gap:.38rem;flex-shrink:0;align-items:center;position:relative;z-index:55}
+.chat-input .inp{flex:1;min-width:0;font-size:.84rem;margin-bottom:0;border-radius:10px;padding:.48rem .78rem}
 .chat-send{width:36px;height:36px;border-radius:50%;background:var(--pu);border:none;color:#fff;cursor:pointer;font-size:.88rem;transition:opacity .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .chat-send:hover{opacity:.84}
 
@@ -293,23 +293,84 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .vid-controls.show{display:flex}
 
 /* MOBILE */
-.mob-chat-btn{display:none;position:fixed;bottom:.9rem;right:1rem;z-index:50;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--pu),var(--pk));border:none;color:#fff;font-size:1.1rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.42);align-items:center;justify-content:center}
+.mob-chat-btn{display:none;position:fixed;bottom:.9rem;right:1rem;z-index:60;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--pu),var(--pk));border:none;color:#fff;font-size:1.1rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.42);align-items:center;justify-content:center;transition:bottom .3s ease,right .3s ease,transform .3s ease}
 
 @media(max-width:700px){
-  .sidebar{position:fixed;right:-100%;top:0;bottom:0;z-index:40;width:min(91vw,310px);transition:right .3s ease}
+  .sidebar{position:fixed;right:-100%;top:0;bottom:0;z-index:52;width:min(91vw,310px);transition:right .3s ease}
   .sidebar.open{right:0;box-shadow:-5px 0 40px rgba(0,0,0,.7)}
   .mob-chat-btn{display:flex}
-  .game-main{padding:.48rem}
+  /* When sidebar is open, move fab above the chat input bar */
+  .mob-chat-btn.sidebar-open{bottom:calc(48px + 1.2rem);right:calc(min(91vw,310px) - 56px);z-index:61}
+  .game-main{padding:.48rem;padding-bottom:4.2rem}
   .td-row .btn{font-size:.86rem}
   .vid-grid[data-count="5"],.vid-grid[data-count="6"],.vid-grid[data-count="7"],.vid-grid[data-count="8"]{grid-template-columns:1fr 1fr}
+  /* Ensure chat input never hides behind floating button */
+  .chat-input{padding-right:.65rem}
+  .chat-input .inp{flex:1;min-width:0}
 }
 @media(max-width:400px){.p-name{font-size:.86rem;padding:.36rem .55rem}.mode-grid{grid-template-columns:1fr}}
+/* LEAVE CONFIRM OVERLAY */
+#ov-leave-confirm{position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;backdrop-filter:blur(12px);padding:1rem}
+#ov-leave-confirm.show{display:flex}
+.leave-card{width:100%;max-width:360px;background:rgba(10,10,20,.97);border:1px solid var(--b2);border-radius:var(--r);padding:2rem;text-align:center;animation:scIn .25s ease}
+.leave-card h3{font-size:1.15rem;font-weight:700;margin-bottom:.4rem}
+.leave-card p{font-size:.88rem;color:var(--m1);margin-bottom:1.5rem}
+.leave-btns{display:flex;gap:.7rem;justify-content:center}
+.leave-btns .btn{min-width:100px}
+
+/* RECONNECTING BANNER */
+#reconnect-banner{position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,rgba(251,191,36,.95),rgba(245,158,11,.95));color:#000;text-align:center;padding:.55rem 1rem;font-size:.84rem;font-weight:600;display:none;align-items:center;justify-content:center;gap:.5rem;animation:reconIn .3s ease}
+#reconnect-banner.show{display:flex}
+#reconnect-banner .recon-spin{width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top:2px solid #000;border-radius:50%;animation:reconSpin .8s linear infinite}
+@keyframes reconIn{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+@keyframes reconSpin{to{transform:rotate(360deg)}}
+
+/* MESSAGE REACTIONS */
+.msg-reactions{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.msg-reaction{display:inline-flex;align-items:center;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:1px 6px;font-size:.68rem;cursor:pointer;transition:all .15s;user-select:none}
+.msg-reaction:hover{border-color:var(--pu);background:rgba(167,139,250,.12)}
+.msg-reaction.mine{border-color:var(--pu);background:rgba(167,139,250,.15)}
+.msg-reaction .r-emoji{font-size:.78rem}
+.msg-reaction .r-count{font-size:.62rem;font-weight:600;color:var(--m1)}
+
+/* REACTION PICKER */
+.reaction-picker{position:absolute;z-index:100;background:rgba(10,10,20,.96);border:1px solid var(--b2);border-radius:22px;padding:4px 6px;display:none;gap:2px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:rpIn .15s ease}
+.reaction-picker.show{display:flex}
+.reaction-picker button{width:32px;height:32px;border:none;background:transparent;font-size:1.15rem;cursor:pointer;border-radius:50%;transition:all .12s;display:flex;align-items:center;justify-content:center}
+.reaction-picker button:hover{background:var(--s3);transform:scale(1.25)}
+@keyframes rpIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+
+/* MSG long-press highlight */
+.msg-bubble.long-pressing{background:rgba(167,139,250,.18)!important;transition:background .2s}
+
+/* NOTIFICATION BADGE on mob-chat-btn */
+.notif-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--rd);color:#fff;font-size:.62rem;font-weight:700;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 6px rgba(239,68,68,.5)}
+.notif-badge.show{display:flex}
+
 .hidden{display:none!important}
 </style>
 </head>
 <body>
 <canvas id="bgc"></canvas>
 <div id="nc"></div>
+
+<!-- Leave Confirm Overlay -->
+<div id="ov-leave-confirm">
+  <div class="leave-card">
+    <h3>🚪 Leave Game?</h3>
+    <p>Do you want to leave the game?</p>
+    <div class="leave-btns">
+      <button class="btn brd" onclick="confirmLeaveYes()">Yes, Leave</button>
+      <button class="btn bp" onclick="confirmLeaveNo()">No, Stay</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reconnecting Banner -->
+<div id="reconnect-banner">
+  <div class="recon-spin"></div>
+  <span>Reconnecting…</span>
+</div>
 
 <!-- PWA install banner -->
 <div id="pwa-banner">
@@ -555,7 +616,7 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
       </div>
     </div>
   </div>
-  <button class="mob-chat-btn" onclick="toggleSidebar()">💬</button>
+  <button class="mob-chat-btn" onclick="toggleSidebar()">💬<span class="notif-badge" id="chat-notif-badge"></span></button>
 </div>
 
 <script type="module">
@@ -593,7 +654,7 @@ catch(e) { console.warn("Firebase not configured — online features disabled");
      chosen   → Next visible to spinner only
 ══════════════════════════════════════════ */
 let mode='offline', myName='', myId='', room='', isHost=false;
-let players=[], history=[];
+let players=[], gameHistory=[];
 
 // G is the canonical game state object — never mutate directly,
 // always assign a new object so renders catch every change.
@@ -607,10 +668,155 @@ let spinning=false, bottleAngle=0, tdDone=false, qaMode=null;
 // knownPlayers for online: id→{name} map, persisted across turns
 let knownPlayers = {};
 
+// ── NEW STATE: Rejoin, reconnect, notifications ──
+let chatMsgCount = 0, unreadChat = 0, inGamePage = false;
+let messageQueue = []; // queue unsent msgs during offline
+let isOnline = navigator.onLine;
+const REACTION_EMOJIS = ['❤️','😂','😮','😢','🔥','👍'];
+let activeReactionPicker = null; // currently open picker
+
 // ── Debug logger ──
 function dbg(...args) {
   console.log('[SpinCircle]', ...args);
   console.log('  G.spinner=', G.spinner, '| G.target=', G.target, '| G.phase=', G.phase);
+}
+
+/* ═══════════════════════════════════════
+   SESSION PERSISTENCE (Rejoin)
+═══════════════════════════════════════ */
+function saveSession(){
+  if(mode!=='online'||!room||!myId)return;
+  sessionStorage.setItem('sc_session',JSON.stringify({room,myId,myName,isHost,mode}));
+}
+function clearSession(){ sessionStorage.removeItem('sc_session'); }
+function getSavedSession(){
+  try{return JSON.parse(sessionStorage.getItem('sc_session'));}catch(e){return null;}
+}
+
+/* ═══════════════════════════════════════
+   LEAVE CONFIRMATION SYSTEM
+═══════════════════════════════════════ */
+let leaveConfirmPending = false;
+
+function showLeaveConfirm(){
+  if(leaveConfirmPending) return;
+  leaveConfirmPending = true;
+  document.getElementById('ov-leave-confirm').classList.add('show');
+}
+window.confirmLeaveYes = async()=>{
+  document.getElementById('ov-leave-confirm').classList.remove('show');
+  leaveConfirmPending = false;
+  clearSession();
+  await actualLeaveGame();
+};
+window.confirmLeaveNo = ()=>{
+  document.getElementById('ov-leave-confirm').classList.remove('show');
+  leaveConfirmPending = false;
+  // Push state back so popstate doesn't fire again immediately
+  window.history.pushState({inGame:true},'','');
+};
+
+async function actualLeaveGame(){
+  if(mode==='online'&&room&&myId) await remove(ref(db,`rooms/${room}/players/${myId}`));
+  stopVoice(); stopVideo();
+  room=''; myId=''; isHost=false; knownPlayers={}; players=[]; inGamePage=false;
+  showPage('page-mode');
+}
+
+// ── beforeunload: warn on refresh/close ──
+window.addEventListener('beforeunload', e=>{
+  if(!inGamePage) return;
+  e.preventDefault();
+  e.returnValue = '';
+  // Save session for potential rejoin
+  saveSession();
+});
+
+// ── popstate: warn on browser back ──
+window.addEventListener('popstate', e=>{
+  if(!inGamePage) return;
+  e.preventDefault();
+  showLeaveConfirm();
+});
+
+/* ═══════════════════════════════════════
+   RECONNECT SYSTEM
+═══════════════════════════════════════ */
+function showReconnectBanner(show){
+  document.getElementById('reconnect-banner').classList.toggle('show', show);
+}
+
+window.addEventListener('online', ()=>{
+  isOnline = true;
+  showReconnectBanner(false);
+  notify('Back online! ✅','s');
+  flushMessageQueue();
+  // Attempt rejoin if we have a session
+  attemptRejoin();
+});
+
+window.addEventListener('offline', ()=>{
+  isOnline = false;
+  if(inGamePage) showReconnectBanner(true);
+});
+
+async function flushMessageQueue(){
+  if(!isOnline || !room) return;
+  while(messageQueue.length > 0){
+    const msg = messageQueue.shift();
+    try { await push(ref(db,`rooms/${room}/chat`), msg); }
+    catch(e){ messageQueue.unshift(msg); break; }
+  }
+}
+
+async function attemptRejoin(){
+  const sess = getSavedSession();
+  if(!sess || !fbOK) return;
+  try{
+    const sn = await get(ref(db,`rooms/${sess.room}`));
+    if(!sn.exists()) { clearSession(); return; }
+    const roomData = sn.val();
+    if(roomData.state !== 'playing') { clearSession(); return; }
+    // Room still active - rejoin!
+    room = sess.room; myId = sess.myId; myName = sess.myName;
+    isHost = sess.isHost; mode = 'online';
+    const pr = ref(db,`rooms/${room}/players/${myId}`);
+    await set(pr, {name:myName, joined:serverTimestamp()});
+    onDisconnect(pr).remove();
+    notify('Rejoined game! 🎉','s');
+    await loadOnlineGame();
+    saveSession();
+  }catch(e){ console.warn('Rejoin failed',e); clearSession(); }
+}
+
+/* ═══════════════════════════════════════
+   NOTIFICATION SYSTEM (enhanced)
+═══════════════════════════════════════ */
+function gameNotify(msg, type='i'){
+  notify(msg, type);
+  // Browser notification (if permitted)
+  if(document.hidden && Notification.permission === 'granted'){
+    try{ new Notification('SpinCircle 🍾', {body: msg, icon:'icon1.png'}); }catch(e){}
+  }
+}
+
+// Request notification permission on first interaction
+document.addEventListener('click', ()=>{
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}, {once:true});
+
+// Chat unread badge
+function updateChatBadge(){
+  const badge = document.getElementById('chat-notif-badge');
+  if(!badge) return;
+  if(unreadChat > 0){
+    badge.textContent = unreadChat > 99 ? '99+' : unreadChat;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
 }
 
 /* ═══════════════════════════════════════
@@ -620,17 +826,27 @@ const PT = {
   used:new Set(), directed:new Set(), spinCount:new Map(), cycle:0,
   _key:(a,b)=>a<b?`${a}|${b}`:`${b}|${a}`,
   _max:n=>n*(n-1)/2,
+  _dirMax:n=>n*(n-1), // total directed pairs
   reset(fn){this.used.clear();this.directed.clear();this.cycle++;fn?.(`🔄 All pairs used! Cycle ${this.cycle+1} fresh.`,'s');},
   init(names){this.used.clear();this.directed.clear();this.spinCount.clear();this.cycle=0;names.forEach(n=>this.spinCount.set(n,0));},
   record(s,t){this.used.add(this._key(s,t));this.directed.add(`${s}→${t}`);this.spinCount.set(s,(this.spinCount.get(s)||0)+1);},
   blocked(s,t){return this.used.has(this._key(s,t));},
+  dirBlocked(s,t){return this.directed.has(`${s}→${t}`);},
   exhausted(ps){return this.used.size>=this._max(ps.length);},
+  dirExhausted(ps){return this.directed.size>=this._dirMax(ps.length);},
   pick(spinner,all,prev){
+    // If all undirected pairs used, reset
     if(this.exhausted(all))this.reset(null);
     const ot=all.filter(p=>p!==spinner);
-    let pool=ot.filter(p=>!this.blocked(spinner,p)&&p!==prev);
-    if(!pool.length)pool=ot.filter(p=>!this.blocked(spinner,p));
+    // Prefer targets where the directed pair spinner→target hasn't been used
+    let pool=ot.filter(p=>!this.dirBlocked(spinner,p)&&p!==prev);
+    if(!pool.length) pool=ot.filter(p=>!this.dirBlocked(spinner,p));
+    // Fallback to undirected blocking
+    if(!pool.length) pool=ot.filter(p=>!this.blocked(spinner,p)&&p!==prev);
+    if(!pool.length) pool=ot.filter(p=>!this.blocked(spinner,p));
+    // Full reset fallback
     if(!pool.length){this.reset(null);pool=ot.filter(p=>p!==prev);if(!pool.length)pool=ot;}
+    // Pick least-targeted player for fairness
     const cnts=pool.map(p=>({p,c:this.spinCount.get(p)||0})).sort((a,b)=>a.c-b.c);
     const fp=cnts.filter(x=>x.c===cnts[0].c).map(x=>x.p);
     for(let i=fp.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fp[i],fp[j]]=[fp[j],fp[i]];}
@@ -646,7 +862,10 @@ let voicePresence={}; // id→{name,muted,speaking}
 const ICE={iceServers:[
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'stun:stun2.l.google.com:19302'}
+  {urls:'stun:stun2.l.google.com:19302'},
+  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
 ]};
 
 /* ── Background ── */
@@ -756,28 +975,55 @@ async function loadOnlineGame(){
   Object.entries(ps).forEach(([id,p])=>{knownPlayers[id]=p;});
   PT.init(players);
   initGameScreen(true);
-  listenGameState(); listenChat(); listenPlayers();
+  listenGameState(); listenChat(); listenPlayers(); listenReactions();
   addSysMsg('Game started! 🍾');
+  saveSession();
 }
 
 /* ── Listen for player join/leave (KEEPS knownPlayers fresh) ── */
 function listenPlayers(){
-  onValue(ref(db,`rooms/${room}/players`),sn=>{
+  onValue(ref(db,`rooms/${room}/players`),async sn=>{
     const now=sn.val()||{};
+    const nowNames = Object.values(now).map(p=>p.name);
     // Join notifications
     Object.entries(now).forEach(([id,p])=>{
       if(!knownPlayers[id]&&Object.keys(knownPlayers).length>0){
-        notify(`${p.name} joined`,'s'); addSysMsg(`${p.name} joined`);
+        gameNotify(`${p.name} joined the room`,'s'); addSysMsg(`${p.name} joined`);
       }
     });
-    // Leave notifications
+    // Leave notifications + auto-skip if leaver is current spinner/target
     Object.entries(knownPlayers).forEach(([id,p])=>{
-      if(!now[id]){notify(`${p.name} left`,'w'); addSysMsg(`${p.name} left`);}
+      if(!now[id]){
+        gameNotify(`${p.name} left the room`,'w'); addSysMsg(`${p.name} left`);
+      }
     });
     knownPlayers=now;
-    // ── FIX: DO NOT overwrite players array mid-game (no reset bug) ──
-    // Only update if we haven't started yet (players array empty = not initialised)
-    if(players.length===0) players=Object.values(now).map(p=>p.name);
+    // Update players list with currently connected players
+    if(nowNames.length > 0) players = nowNames;
+    // ── AUTO-SKIP: if spinner or target left, advance game ──
+    if(isHost && nowNames.length >= 2){
+      const gs = await get(ref(db,`rooms/${room}/game`));
+      const g = gs.val();
+      if(g){
+        const spinnerGone = g.spinner && !nowNames.includes(g.spinner);
+        const targetGone = g.target && !nowNames.includes(g.target);
+        if(spinnerGone){
+          // Pick a new spinner from remaining players
+          const newSpinner = nowNames[Math.floor(Math.random()*nowNames.length)];
+          await update(ref(db,`rooms/${room}/game`),{
+            spinner:newSpinner, target:null, type:null, phase:'idle',
+            spinTrigger:null, chatPhase:null
+          });
+          addSysMsg(`${g.spinner} left — ${newSpinner} is now spinning!`);
+        } else if(targetGone && (g.phase==='spun'||g.phase==='chosen')){
+          // Target left mid-turn, reset to idle so spinner can re-spin
+          await update(ref(db,`rooms/${room}/game`),{
+            target:null, type:null, phase:'idle', spinTrigger:null, chatPhase:null
+          });
+          addSysMsg(`${g.target} left — ${g.spinner}, spin again!`);
+        }
+      }
+    }
     renderVoiceUserList(); // refresh voice list with updated names
   });
 }
@@ -797,7 +1043,7 @@ function initGameScreen(online){
   document.getElementById('btn-players').style.display='';
 
   // ── RESET only game-session state, NOT players list ──
-  history=[];
+  gameHistory=[];
   bottleAngle=0; spinning=false; tdDone=false;
   G={spinner:null,target:null,prevSpinner:null,phase:'idle',type:null,spinTrigger:null,chatPhase:null};
 
@@ -816,7 +1062,17 @@ function initGameScreen(online){
   document.getElementById('history-strip').innerHTML='';
   document.getElementById('chat-msgs').innerHTML='';
   const ps=document.getElementById('pair-stats');if(ps)ps.textContent='';
+  inGamePage = true;
+  chatMsgCount = 0; unreadChat = 0; updateChatBadge();
+  // Push history state for back-button interception
+  window.history.pushState({inGame:true},'','');
   showPage('page-game');
+
+  // Offline: hide chat/sidebar related elements completely
+  if(!online){
+    document.getElementById('sidebar').classList.add('hidden');
+    document.querySelector('.mob-chat-btn').style.display='none';
+  }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1118,12 +1374,18 @@ function listenGameState(){
 
     renderGame();
 
-    // Auto-open chat for Q&A flow
-    if(G.chatPhase==='q' && G.spinner===myName){setTab('chat');document.getElementById('sidebar').classList.add('open');document.getElementById('chat-inp').focus();}
-    if(G.chatPhase==='a' && G.target===myName){setTab('chat');document.getElementById('sidebar').classList.add('open');document.getElementById('chat-inp').focus();}
+    // Auto-open chat for Q&A flow — ONLY when chatPhase transitions (not on nextTurn)
+    if(G.chatPhase==='q' && G.spinner===myName && prevPhase!=='idle'){
+      setTab('chat');document.getElementById('sidebar').classList.add('open');document.getElementById('chat-inp').focus();
+      gameNotify('Your turn to ask a question!','i');
+    }
+    if(G.chatPhase==='a' && G.target===myName && prevPhase!=='idle'){
+      setTab('chat');document.getElementById('sidebar').classList.add('open');document.getElementById('chat-inp').focus();
+      gameNotify('Your turn to answer!','i');
+    }
   });
   onValue(ref(db,`rooms/${room}/history`),sn=>{
-    history=sn.val()?Object.values(sn.val()).sort((a,b)=>a.ts-b.ts):[];
+    gameHistory=sn.val()?Object.values(sn.val()).sort((a,b)=>a.ts-b.ts):[];
     renderHistory();
   });
 }
@@ -1136,9 +1398,9 @@ window.chooseTD=async(type)=>{
   dbg('chooseTD', type, G.spinner, G.target);
   if(mode==='offline'){
     G={...G, type, phase:'chosen'};
-    history.push({text:`${G.spinner} ➝ ${G.target}`,type,ts:Date.now()});
+    gameHistory.push({text:`${G.spinner} ➝ ${G.target}`,type,ts:Date.now()});
     renderHistory(); renderGame();
-    openQAPrompt('q',G.spinner,G.target,type);
+    // No Q&A prompt in offline — just show result and Next button
   } else {
     const gs=await get(ref(db,`rooms/${room}/game`)); const g=gs.val(); if(!g)return;
     await push(ref(db,`rooms/${room}/history`),{text:`${g.spinner} ➝ ${g.target}`,type,ts:Date.now()});
@@ -1181,52 +1443,184 @@ window.nextTurn=async()=>{
 };
 
 /* ── History / PairStats ── */
-function renderHistory(){const s=document.getElementById('history-strip');s.innerHTML=history.slice(-20).map(h=>`<div class="hchip ${h.type[0]}">${esc(h.text)}<span class="hbadge ${h.type[0]}">${h.type}</span></div>`).join('');s.scrollLeft=s.scrollWidth;}
+function renderHistory(){const s=document.getElementById('history-strip');s.innerHTML=gameHistory.slice(-20).map(h=>`<div class="hchip ${h.type[0]}">${esc(h.text)}<span class="hbadge ${h.type[0]}">${h.type}</span></div>`).join('');s.scrollLeft=s.scrollWidth;}
 function updatePairStats(){const el=document.getElementById('pair-stats');if(!el||!players.length)return;const max=players.length*(players.length-1)/2,used=PT.used.size,pct=max>0?Math.round(used/max*100):0;el.innerHTML=`<span class="ps-lbl">Pairs</span><span class="ps-cnt">${used}<span class="ps-mx">/${max}</span></span><div class="ps-bar-wrap"><div class="ps-bar" style="width:${pct}%"></div></div>${PT.cycle>0?`<span class="ps-cycle">Cycle ${PT.cycle+1}</span>`:''}`;} 
 
 /* ── Leave ── */
-window.leaveGame=async()=>{if(mode==='online'&&room&&myId)await remove(ref(db,`rooms/${room}/players/${myId}`));stopVoice();stopVideo();room='';myId='';isHost=false;knownPlayers={};players=[];showPage('page-mode');};
+window.leaveGame=()=>{ showLeaveConfirm(); };
 
 /* ═══════════════════════════════════════════════════
-   CHAT
+   CHAT (with reactions + notifications)
 ═══════════════════════════════════════════════════ */
+let chatMsgKeys = []; // ordered firebase keys for reaction targeting
+
 function listenChat(){
   onValue(ref(db,`rooms/${room}/chat`),sn=>{
     const ms=sn.val();if(!ms)return;
-    renderChatMessages(Object.values(ms).sort((a,b)=>a.ts-b.ts));
+    const entries = Object.entries(ms).sort((a,b)=>(a[1].ts||0)-(b[1].ts||0));
+    chatMsgKeys = entries.map(e=>e[0]);
+    const msgs = entries.map(e=>e[1]);
+    const newCount = msgs.filter(m=>!m.sys).length;
+    // Track unread
+    const sidebar = document.getElementById('sidebar');
+    const chatTabActive = document.getElementById('tab-chat')?.classList.contains('active');
+    const sidebarOpen = sidebar?.classList.contains('open') || !sidebar?.classList.contains('hidden');
+    if(newCount > chatMsgCount && chatMsgCount > 0){
+      const diff = newCount - chatMsgCount;
+      if(!(chatTabActive && (sidebarOpen || window.innerWidth > 700))){
+        unreadChat += diff;
+        updateChatBadge();
+      }
+      // Notify for new messages
+      const latest = msgs[msgs.length-1];
+      if(latest && !latest.sys && latest.name !== myName){
+        gameNotify(`${latest.name}: ${latest.text.substring(0,40)}${latest.text.length>40?'…':''}`,'i');
+      }
+    }
+    chatMsgCount = newCount;
+    renderChatMessages(msgs);
   });
 }
 
 function renderChatMessages(msgs){
   const el=document.getElementById('chat-msgs');
-  el.innerHTML=msgs.map(m=>{
+  el.innerHTML=msgs.map((m,i)=>{
     if(m.sys)return`<div class="msg sys"><div class="msg-bubble sys-text">— ${esc(m.text)} —</div></div>`;
     const mine=m.name===myName, align=mine?'right':'left', tag=m.tag||'';
     const timeStr=m.ts?fmtTime(m.ts):'';
-    return`<div class="msg ${align} ${tag}">
+    const msgKey = chatMsgKeys[i]||'';
+    // Build reactions display
+    let reactionsHtml = '';
+    if(m.reactions){
+      const grouped = {};
+      Object.entries(m.reactions).forEach(([uid,emoji])=>{
+        if(!grouped[emoji]) grouped[emoji]={count:0,mine:false};
+        grouped[emoji].count++;
+        if(uid===myId) grouped[emoji].mine=true;
+      });
+      reactionsHtml = '<div class="msg-reactions">' +
+        Object.entries(grouped).map(([emoji,d])=>
+          `<span class="msg-reaction${d.mine?' mine':''}" onclick="toggleReaction('${msgKey}','${emoji}')">`+
+          `<span class="r-emoji">${emoji}</span><span class="r-count">${d.count}</span></span>`
+        ).join('') + '</div>';
+    }
+    return`<div class="msg ${align} ${tag}" data-msgkey="${msgKey}" style="position:relative">
       <div class="msg-meta">
         <span class="msg-name">${esc(m.name)}${tag==='ask'?' 🔵':tag==='ans'?' 🎤':''}</span>
         ${timeStr?`<span class="msg-time">${timeStr}</span>`:''}
       </div>
       <div class="msg-bubble">${esc(m.text)}</div>
+      ${reactionsHtml}
     </div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
+  // Attach long-press listeners for reactions
+  setupLongPress();
+}
+
+/* ── Message Reactions (long-press) ── */
+let lpTimer = null, lpTarget = null;
+function setupLongPress(){
+  document.querySelectorAll('.msg[data-msgkey]').forEach(el=>{
+    const key = el.dataset.msgkey;
+    if(!key) return;
+    const bubble = el.querySelector('.msg-bubble');
+    if(!bubble) return;
+    // Touch
+    bubble.addEventListener('touchstart', e=>{ lpTarget=el; lpTimer=setTimeout(()=>showReactionPicker(el,key),500); bubble.classList.add('long-pressing'); }, {passive:true});
+    bubble.addEventListener('touchend', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
+    bubble.addEventListener('touchmove', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
+    // Mouse (desktop)
+    bubble.addEventListener('mousedown', e=>{ if(e.button!==0)return; lpTarget=el; lpTimer=setTimeout(()=>showReactionPicker(el,key),500); bubble.classList.add('long-pressing'); });
+    bubble.addEventListener('mouseup', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
+    bubble.addEventListener('mouseleave', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
+  });
+}
+
+function showReactionPicker(msgEl, msgKey){
+  hideReactionPicker();
+  const picker = document.createElement('div');
+  picker.className = 'reaction-picker show';
+  picker.id = 'active-reaction-picker';
+  picker.innerHTML = REACTION_EMOJIS.map(e=>
+    `<button onclick="addReaction('${msgKey}','${e}')">${e}</button>`
+  ).join('');
+  msgEl.appendChild(picker);
+  activeReactionPicker = picker;
+  // Position above the message
+  const isRight = msgEl.classList.contains('right');
+  picker.style.bottom = '100%';
+  picker.style[isRight?'right':'left'] = '0';
+  picker.style.marginBottom = '4px';
+}
+
+function hideReactionPicker(){
+  const existing = document.getElementById('active-reaction-picker');
+  if(existing) existing.remove();
+  activeReactionPicker = null;
+}
+
+// Close picker on outside click
+document.addEventListener('click', e=>{
+  if(activeReactionPicker && !activeReactionPicker.contains(e.target)){
+    hideReactionPicker();
+  }
+});
+
+window.addReaction = async(msgKey, emoji)=>{
+  hideReactionPicker();
+  if(!room || !myId) return;
+  await set(ref(db,`rooms/${room}/chat/${msgKey}/reactions/${myId}`), emoji);
+};
+
+window.toggleReaction = async(msgKey, emoji)=>{
+  if(!room || !myId) return;
+  const rRef = ref(db,`rooms/${room}/chat/${msgKey}/reactions/${myId}`);
+  const sn = await get(rRef);
+  if(sn.exists() && sn.val()===emoji){
+    await remove(rRef);
+  } else {
+    await set(rRef, emoji);
+  }
+};
+
+function listenReactions(){
+  // Reactions are embedded in chat messages, so listenChat handles it
+  // This is a placeholder if we want separate reaction listeners later
 }
 
 window.sendChat=async()=>{
   if(mode==='offline')return;
   const inp=document.getElementById('chat-inp'),tx=inp.value.trim();if(!tx)return;inp.value='';
-  const gs=await get(ref(db,`rooms/${room}/game`));const g=gs.val()||{};let tag='';
-  if(g.chatPhase==='q'&&g.spinner===myName){tag='ask';await update(ref(db,`rooms/${room}/game`),{chatPhase:'a'});addSysMsg(`${myName} asked! ${g.target}, answer in chat.`);}
-  else if(g.chatPhase==='a'&&g.target===myName){tag='ans';await update(ref(db,`rooms/${room}/game`),{chatPhase:null});addSysMsg(`${myName} answered!`);}
-  await push(ref(db,`rooms/${room}/chat`),{name:myName,text:tx,ts:Date.now(),tag});
+  const msgData = {name:myName,text:tx,ts:Date.now(),tag:''};
+  try{
+    const gs=await get(ref(db,`rooms/${room}/game`));const g=gs.val()||{};
+    if(g.chatPhase==='q'&&g.spinner===myName){msgData.tag='ask';await update(ref(db,`rooms/${room}/game`),{chatPhase:'a'});addSysMsg(`${myName} asked! ${g.target}, answer in chat.`);gameNotify('Question sent! ❓','s');}
+    else if(g.chatPhase==='a'&&g.target===myName){msgData.tag='ans';await update(ref(db,`rooms/${room}/game`),{chatPhase:null});addSysMsg(`${myName} answered!`);gameNotify('Answer sent! ✅','s');}
+    if(isOnline){
+      await push(ref(db,`rooms/${room}/chat`),msgData);
+    } else {
+      messageQueue.push(msgData);
+      notify('Message queued — will send when online','w');
+    }
+  } catch(e){
+    messageQueue.push(msgData);
+    notify('Message queued — will send when online','w');
+  }
 };
 function addSysMsg(text){if(mode!=='online'||!room)return;push(ref(db,`rooms/${room}/chat`),{sys:true,text,ts:Date.now()});}
 
 /* ═══════════════════════════════════════════════════
    VOICE — with speaking detection + presence list
+   Uses per-pair signaling paths for proper multi-user
 ═══════════════════════════════════════════════════ */
+// Helper: consistent pair key for signaling paths
+function voicePairKey(a,b){return a<b?`${a}__${b}`:`${b}__${a}`;}
+// Track which ICE candidates we already added per peer
+let vIceAdded={};
+// Track listeners for cleanup
+let vSigListeners={};
+
 window.joinVoice=async()=>{
   try{
     lVoice=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
@@ -1235,15 +1629,12 @@ window.joinVoice=async()=>{
     document.getElementById('btn-join-voice').style.display='none';
     document.getElementById('btn-mic').classList.remove('hidden');
     document.getElementById('voice-section-note').style.display='none';
-    // Register presence
     if(room){
       const vpRef=ref(db,`rooms/${room}/vpVoice/${myId}`);
       await set(vpRef,{name:myName,uid:myId,muted:false});
       onDisconnect(vpRef).remove();
-      onDisconnect(ref(db,`rooms/${room}/vsigV/${myId}`)).remove();
       setupVoiceSignaling();
     }
-    // Add self to presence
     voicePresence[myId]={name:myName,muted:false,speaking:false};
     renderVoiceUserList();
     notify('Joined voice 🎙','s');
@@ -1252,52 +1643,112 @@ window.joinVoice=async()=>{
 };
 
 function setupVoiceSignaling(){
-  // Listen for peers joining/leaving voice
   onValue(ref(db,`rooms/${room}/vpVoice`),async sn=>{
     const peers=sn.val()||{};
-    // Update voicePresence from Firebase
     Object.entries(peers).forEach(([id,p])=>{
       if(!voicePresence[id]) voicePresence[id]={name:p.name,muted:p.muted||false,speaking:false};
       else voicePresence[id]={...voicePresence[id],name:p.name,muted:p.muted||false};
     });
-    // Remove stale
     Object.keys(voicePresence).forEach(id=>{if(!peers[id]&&id!==myId)delete voicePresence[id];});
     renderVoiceUserList();
-
-    // Initiate to higher-priority peers
     const peerIds=Object.keys(peers).filter(id=>id!==myId);
     for(const pid of peerIds){
-      if(!vPCs[pid]&&myId>pid) await createVoiceOffer(pid);
+      if(!vPCs[pid]){
+        if(myId>pid) await createVoiceOffer(pid);
+        else await handleVoiceAnswer(pid); // lower-priority: check for pending offer
+      }
     }
-    // Clean up stale PCs
-    Object.keys(vPCs).forEach(pid=>{if(!peers[pid]){try{vPCs[pid].close();}catch(e){}delete vPCs[pid];}});
+    Object.keys(vPCs).forEach(pid=>{
+      if(!peers[pid]){
+        try{vPCs[pid].close();}catch(e){}
+        delete vPCs[pid]; delete vIceAdded[pid];
+        const pk=voicePairKey(myId,pid);
+        if(vSigListeners[pk]){off(ref(db,`rooms/${room}/vsigV2/${pk}`));delete vSigListeners[pk];}
+      }
+    });
   });
+}
 
-  // Listen for signals
-  onValue(ref(db,`rooms/${room}/vsigV`),async sn=>{
-    const sigs=sn.val()||{};
-    for(const[pid,sd]of Object.entries(sigs)){
-      if(pid===myId)continue;
-      if(!vPCs[pid]&&sd.offer&&!sd.answer)await handleVoiceOffer(pid,sd);
-      if(vPCs[pid]&&sd.answer&&!vPCs[pid]._a){try{await vPCs[pid].setRemoteDescription(JSON.parse(sd.answer));vPCs[pid]._a=true;}catch(e){}}
-      if(sd.ice&&sd.ice!==vPCs[pid]?._ice){try{if(vPCs[pid]){await vPCs[pid].addIceCandidate(JSON.parse(sd.ice));vPCs[pid]._ice=sd.ice;}}catch(e){}}
+function listenVoicePairSignal(pid){
+  const pk=voicePairKey(myId,pid);
+  if(vSigListeners[pk]) return;
+  vSigListeners[pk]=true;
+  console.log('[Voice] listening pair signal',pk);
+  onValue(ref(db,`rooms/${room}/vsigV2/${pk}`),async sn=>{
+    const sd=sn.val();if(!sd)return;
+    const pc=vPCs[pid];if(!pc)return;
+    // Handle answer (for offerer)
+    if(sd.answer&&!pc._answerSet){
+      try{await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sd.answer)));pc._answerSet=true;console.log('[Voice] answer set from',pid);}catch(e){console.warn('[Voice] answer err',e);}
+    }
+    // Handle ICE candidates
+    if(sd.ice){
+      if(!vIceAdded[pid]) vIceAdded[pid]=new Set();
+      for(const[k,cStr] of Object.entries(sd.ice)){
+        if(vIceAdded[pid].has(k))continue;
+        // Only add ICE from the other peer
+        try{const c=JSON.parse(cStr);if(c.from!==myId){await pc.addIceCandidate(new RTCIceCandidate(c.candidate));vIceAdded[pid].add(k);}}catch(e){}
+      }
     }
   });
 }
 
-async function createVoiceOffer(pid){const pc=newVoicePC(pid);const of=await pc.createOffer();await pc.setLocalDescription(of);update(ref(db,`rooms/${room}/vsigV/${myId}`),{offer:JSON.stringify(of)});}
-async function handleVoiceOffer(pid,sd){const pc=newVoicePC(pid);await pc.setRemoteDescription(JSON.parse(sd.offer));const ans=await pc.createAnswer();await pc.setLocalDescription(ans);update(ref(db,`rooms/${room}/vsigV/${pid}`),{answer:JSON.stringify(ans)});}
+async function createVoiceOffer(pid){
+  console.log('[Voice] creating offer to',pid);
+  const pc=newVoicePC(pid);
+  const pk=voicePairKey(myId,pid);
+  // Clean old signal data for this pair
+  await remove(ref(db,`rooms/${room}/vsigV2/${pk}`));
+  vIceAdded[pid]=new Set();
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await set(ref(db,`rooms/${room}/vsigV2/${pk}/offer`),JSON.stringify(offer));
+  await set(ref(db,`rooms/${room}/vsigV2/${pk}/offerer`),myId);
+  listenVoicePairSignal(pid);
+}
+
+async function handleVoiceAnswer(pid){
+  const pk=voicePairKey(myId,pid);
+  const sn=await get(ref(db,`rooms/${room}/vsigV2/${pk}`));
+  const sd=sn.val();
+  if(!sd||!sd.offer||sd.offerer===myId) return; // I'm the offerer or no offer
+  if(vPCs[pid]) return; // already connected
+  console.log('[Voice] answering offer from',pid);
+  const pc=newVoicePC(pid);
+  vIceAdded[pid]=new Set();
+  await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sd.offer)));
+  const answer=await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await set(ref(db,`rooms/${room}/vsigV2/${pk}/answer`),JSON.stringify(answer));
+  listenVoicePairSignal(pid);
+}
 
 function newVoicePC(pid){
+  if(vPCs[pid]){try{vPCs[pid].close();}catch(e){}}
   const pc=new RTCPeerConnection(ICE); vPCs[pid]=pc;
   if(lVoice)lVoice.getTracks().forEach(t=>pc.addTrack(t,lVoice));
-  pc.onicecandidate=e=>{if(e.candidate&&room)update(ref(db,`rooms/${room}/vsigV/${myId}`),{ice:JSON.stringify(e.candidate)});};
+  const pk=voicePairKey(myId,pid);
+  pc.onicecandidate=e=>{
+    if(e.candidate&&room){
+      push(ref(db,`rooms/${room}/vsigV2/${pk}/ice`),JSON.stringify({candidate:e.candidate.toJSON(),from:myId}));
+    }
+  };
   pc.ontrack=e=>{
-    const a=document.createElement('audio');a.autoplay=true;a.srcObject=e.streams[0];
+    console.log('[Voice] got remote track from',pid);
+    const a=document.createElement('audio');a.autoplay=true;a.id=`vaudio-${pid}`;
+    a.srcObject=e.streams[0];
+    // Remove old audio element if exists
+    document.getElementById(`vaudio-${pid}`)?.remove();
     document.body.appendChild(a);
     detectRemoteVoice(e.streams[0],pid);
   };
-  pc.onconnectionstatechange=()=>{if(['disconnected','failed','closed'].includes(pc.connectionState)){delete vPCs[pid];}};
+  pc.onconnectionstatechange=()=>{
+    console.log('[Voice] PC state',pid,pc.connectionState);
+    if(['disconnected','failed','closed'].includes(pc.connectionState)){
+      delete vPCs[pid];delete vIceAdded[pid];
+    }
+  };
+  pc.onnegotiationneeded=()=>console.log('[Voice] negotiation needed for',pid);
   return pc;
 }
 
@@ -1384,14 +1835,22 @@ function renderVoiceUserList(){
 
 function stopVoice(){
   if(lVoice){lVoice.getTracks().forEach(t=>t.stop());lVoice=null;}
-  Object.values(vPCs).forEach(pc=>{try{pc.close();}catch(e){}});vPCs={};
-  voicePresence={};
-  if(room&&myId){remove(ref(db,`rooms/${room}/vpVoice/${myId}`));remove(ref(db,`rooms/${room}/vsigV/${myId}`));}
+  Object.keys(vPCs).forEach(pid=>{
+    try{vPCs[pid].close();}catch(e){}
+    document.getElementById(`vaudio-${pid}`)?.remove();
+    const pk=voicePairKey(myId,pid);
+    if(vSigListeners[pk]){off(ref(db,`rooms/${room}/vsigV2/${pk}`));delete vSigListeners[pk];}
+  });
+  vPCs={};vIceAdded={};voicePresence={};
+  if(room&&myId){remove(ref(db,`rooms/${room}/vpVoice/${myId}`));}
 }
 
 /* ═══════════════════════════════════════════════════
-   VIDEO CHAT — Full-mesh, presence-driven tiles
+   VIDEO CHAT — Full-mesh, per-pair signaling
 ═══════════════════════════════════════════════════ */
+function vidPairKey(a,b){return a<b?`${a}__${b}`:`${b}__${a}`;}
+let vidIceAdded={}, vidSigListeners={};
+
 window.startVideo=async()=>{
   try{
     lVideo=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
@@ -1403,9 +1862,7 @@ window.startVideo=async()=>{
     if(room){
       await update(ref(db,`rooms/${room}/vp/${myId}`),{name:myName,uid:myId,ts:serverTimestamp()});
       onDisconnect(ref(db,`rooms/${room}/vp/${myId}`)).remove();
-      onDisconnect(ref(db,`rooms/${room}/vsig/${myId}`)).remove();
       listenVideoPresence();
-      listenVideoSignals();
     }
     updateVideoGridLayout();
     notify('Camera live 📹','s');
@@ -1416,47 +1873,127 @@ function listenVideoPresence(){
   onValue(ref(db,`rooms/${room}/vp`),sn=>{
     const presence=sn.val()||{};
     const peerIds=Object.keys(presence).filter(id=>id!==myId);
-    peerIds.forEach(pid=>{if(!document.getElementById(`vtile-${pid}`))addVideoTile(pid,presence[pid].name||'Player',null,false);});
+    // Add tiles for new peers
+    peerIds.forEach(pid=>{
+      if(!document.getElementById(`vtile-${pid}`))
+        addVideoTile(pid,presence[pid].name||'Player',null,false);
+    });
+    // Remove tiles for departed peers
     document.querySelectorAll('.vid-tile[data-pid]').forEach(el=>{
       const pid=el.dataset.pid;
-      if(pid!==myId&&!presence[pid]){el.remove();if(vidPCs[pid]){try{vidPCs[pid].close();}catch(e){}delete vidPCs[pid];}}
+      if(pid!==myId&&!presence[pid]){
+        el.remove();
+        if(vidPCs[pid]){try{vidPCs[pid].close();}catch(e){}}
+        delete vidPCs[pid]; delete vidIceAdded[pid];
+        const pk=vidPairKey(myId,pid);
+        if(vidSigListeners[pk]){off(ref(db,`rooms/${room}/vsig2/${pk}`));delete vidSigListeners[pk];}
+      }
     });
-    peerIds.forEach(async pid=>{if(!vidPCs[pid]&&myId>pid&&lVideo)await createVideoOffer(pid);});
+    // Initiate connections
+    peerIds.forEach(async pid=>{
+      if(!vidPCs[pid]&&lVideo){
+        if(myId>pid) await createVideoOffer(pid);
+        else await handleVideoAnswer(pid); // lower-priority: check for pending offer
+      }
+    });
     updateVideoGridLayout();
   });
 }
 
-function listenVideoSignals(){
-  onValue(ref(db,`rooms/${room}/vsig`),async sn=>{
-    const sigs=sn.val()||{};
-    for(const[pid,sd]of Object.entries(sigs)){
-      if(pid===myId)continue;
-      if(!vidPCs[pid]&&sd.offer&&!sd.answer)await handleVideoOffer(pid,sd);
-      if(vidPCs[pid]&&sd.answer&&!vidPCs[pid]._a){try{await vidPCs[pid].setRemoteDescription(JSON.parse(sd.answer));vidPCs[pid]._a=true;}catch(e){}}
-      if(sd.ice&&sd.ice!==vidPCs[pid]?._ice){try{if(vidPCs[pid]){await vidPCs[pid].addIceCandidate(JSON.parse(sd.ice));vidPCs[pid]._ice=sd.ice;}}catch(e){}}
+function listenVideoPairSignal(pid){
+  const pk=vidPairKey(myId,pid);
+  if(vidSigListeners[pk]) return;
+  vidSigListeners[pk]=true;
+  console.log('[Video] listening pair signal',pk);
+  onValue(ref(db,`rooms/${room}/vsig2/${pk}`),async sn=>{
+    const sd=sn.val();if(!sd)return;
+    const pc=vidPCs[pid];if(!pc)return;
+    // Handle answer (for offerer)
+    if(sd.answer&&!pc._answerSet){
+      try{
+        await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sd.answer)));
+        pc._answerSet=true;
+        console.log('[Video] answer set from',pid);
+      }catch(e){console.warn('[Video] answer err',e);}
+    }
+    // Handle ICE candidates
+    if(sd.ice){
+      if(!vidIceAdded[pid]) vidIceAdded[pid]=new Set();
+      for(const[k,cStr] of Object.entries(sd.ice)){
+        if(vidIceAdded[pid].has(k))continue;
+        try{
+          const c=JSON.parse(cStr);
+          if(c.from!==myId){
+            await pc.addIceCandidate(new RTCIceCandidate(c.candidate));
+            vidIceAdded[pid].add(k);
+          }
+        }catch(e){}
+      }
     }
   });
 }
 
-async function createVideoOffer(pid){const pc=newVidPC(pid);const of=await pc.createOffer();await pc.setLocalDescription(of);await update(ref(db,`rooms/${room}/vsig/${myId}`),{offer:JSON.stringify(of)});}
-async function handleVideoOffer(pid,sd){const pc=newVidPC(pid);await pc.setRemoteDescription(JSON.parse(sd.offer));const ans=await pc.createAnswer();await pc.setLocalDescription(ans);await update(ref(db,`rooms/${room}/vsig/${pid}`),{answer:JSON.stringify(ans)});}
+async function createVideoOffer(pid){
+  console.log('[Video] creating offer to',pid);
+  const pc=newVidPC(pid);
+  const pk=vidPairKey(myId,pid);
+  await remove(ref(db,`rooms/${room}/vsig2/${pk}`));
+  vidIceAdded[pid]=new Set();
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await set(ref(db,`rooms/${room}/vsig2/${pk}/offer`),JSON.stringify(offer));
+  await set(ref(db,`rooms/${room}/vsig2/${pk}/offerer`),myId);
+  listenVideoPairSignal(pid);
+}
+
+async function handleVideoAnswer(pid){
+  const pk=vidPairKey(myId,pid);
+  const sn=await get(ref(db,`rooms/${room}/vsig2/${pk}`));
+  const sd=sn.val();
+  if(!sd||!sd.offer||sd.offerer===myId) return;
+  if(vidPCs[pid]) return;
+  console.log('[Video] answering offer from',pid);
+  const pc=newVidPC(pid);
+  vidIceAdded[pid]=new Set();
+  await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sd.offer)));
+  const answer=await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await set(ref(db,`rooms/${room}/vsig2/${pk}/answer`),JSON.stringify(answer));
+  listenVideoPairSignal(pid);
+}
 
 function newVidPC(pid){
-  if(vidPCs[pid]){try{vidPCs[pid].close();}catch(e){}};
+  if(vidPCs[pid]){try{vidPCs[pid].close();}catch(e){}}
   const pc=new RTCPeerConnection(ICE); vidPCs[pid]=pc;
   if(lVideo)lVideo.getTracks().forEach(t=>pc.addTrack(t,lVideo));
-  pc.onicecandidate=e=>{if(e.candidate&&room)update(ref(db,`rooms/${room}/vsig/${myId}`),{ice:JSON.stringify(e.candidate)});};
+  const pk=vidPairKey(myId,pid);
+  pc.onicecandidate=e=>{
+    if(e.candidate&&room){
+      push(ref(db,`rooms/${room}/vsig2/${pk}/ice`),JSON.stringify({candidate:e.candidate.toJSON(),from:myId}));
+    }
+  };
   pc.ontrack=e=>{
+    console.log('[Video] got remote track from',pid,'kind:',e.track.kind);
     const tile=document.getElementById(`vtile-${pid}`);if(!tile)return;
     let vid=tile.querySelector('video');
-    if(!vid){vid=document.createElement('video');vid.autoplay=true;vid.playsInline=true;tile.prepend(vid);}
+    if(!vid){
+      vid=document.createElement('video');
+      vid.autoplay=true;vid.playsInline=true;
+      tile.prepend(vid);
+    }
     vid.srcObject=e.streams[0];
     const ava=tile.querySelector('.vid-avatar');if(ava)ava.style.display='none';
     tile.classList.remove('cam-off');
     detectVideoSpeaking(e.streams[0],pid);
     updateVideoGridLayout();
   };
-  pc.onconnectionstatechange=()=>{if(['disconnected','failed','closed'].includes(pc.connectionState)){delete vidPCs[pid];}};
+  pc.onconnectionstatechange=()=>{
+    console.log('[Video] PC state',pid,pc.connectionState);
+    if(['disconnected','failed','closed'].includes(pc.connectionState)){
+      delete vidPCs[pid];delete vidIceAdded[pid];
+    }
+  };
+
   return pc;
 }
 
@@ -1466,12 +2003,25 @@ function addVideoTile(id,name,stream,isLocal){
   const tile=document.createElement('div');
   tile.className=`vid-tile${isLocal?' local':''}`;
   tile.id=`vtile-${id}`; tile.dataset.pid=id;
-  if(stream){const v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.srcObject=stream;tile.appendChild(v);}
-  else{const ava=document.createElement('div');ava.className='vid-avatar';ava.innerHTML=`<div class="vid-avatar-letter">${(name[0]||'?').toUpperCase()}</div><div class="vid-avatar-name">${esc(name)}</div>`;tile.appendChild(ava);}
+  if(stream){
+    const v=document.createElement('video');
+    v.autoplay=true;v.playsInline=true;v.srcObject=stream;
+    // Mute local video to prevent echo — remote stays unmuted
+    if(isLocal) v.muted=true;
+    tile.appendChild(v);
+  } else {
+    const ava=document.createElement('div');ava.className='vid-avatar';
+    ava.innerHTML=`<div class="vid-avatar-letter">${(name[0]||'?').toUpperCase()}</div><div class="vid-avatar-name">${esc(name)}</div>`;
+    tile.appendChild(ava);
+  }
   const label=document.createElement('div');label.className='vid-tile-label';
   label.innerHTML=`<span class="vid-tile-name">${esc(name)}${isLocal?' (you)':''}</span><div class="vid-tile-icons" id="vicons-${id}"><span class="vid-tile-icon" id="vicon-cam-${id}">📹</span><span class="vid-tile-icon" id="vicon-mic-${id}">🎙</span></div>`;
   tile.appendChild(label);
-  if(isLocal){const ctrl=document.createElement('div');ctrl.className='vid-tile-controls';ctrl.innerHTML=`<button class="vtc-btn" id="vtc-cam-${id}" onclick="toggleCam()" title="Cam">📹</button><button class="vtc-btn" id="vtc-mic-${id}" onclick="toggleVMic()" title="Mic">🎙</button>`;tile.appendChild(ctrl);}
+  if(isLocal){
+    const ctrl=document.createElement('div');ctrl.className='vid-tile-controls';
+    ctrl.innerHTML=`<button class="vtc-btn" id="vtc-cam-${id}" onclick="toggleCam()" title="Cam">📹</button><button class="vtc-btn" id="vtc-mic-${id}" onclick="toggleVMic()" title="Mic">🎙</button>`;
+    tile.appendChild(ctrl);
+  }
   grid.appendChild(tile);
   updateVideoGridLayout();
   if(isLocal&&stream)detectVideoSpeaking(stream,id);
@@ -1499,19 +2049,39 @@ window.toggleVMic=()=>{
 
 window.stopVideo=()=>{
   if(lVideo){lVideo.getTracks().forEach(t=>t.stop());lVideo=null;}
-  Object.values(vidPCs).forEach(pc=>{try{pc.close();}catch(e){}});vidPCs={};videoActive=false;
+  Object.keys(vidPCs).forEach(pid=>{
+    try{vidPCs[pid].close();}catch(e){}
+    const pk=vidPairKey(myId,pid);
+    if(vidSigListeners[pk]){off(ref(db,`rooms/${room}/vsig2/${pk}`));delete vidSigListeners[pk];}
+  });
+  vidPCs={};vidIceAdded={};videoActive=false;
   document.getElementById('vid-grid').innerHTML='';
   document.getElementById('vid-start-area').style.display='';
   document.getElementById('vid-controls').classList.remove('show');
   document.getElementById('vid-header-status').textContent='Off';
   updateVideoGridLayout();
-  if(room&&myId){remove(ref(db,`rooms/${room}/vp/${myId}`));remove(ref(db,`rooms/${room}/vsig/${myId}`));}
+  if(room&&myId){remove(ref(db,`rooms/${room}/vp/${myId}`));}
 };
 function stopVideo(){window.stopVideo();}
 
 /* ── UI helpers ── */
-window.setTab=t=>{document.querySelectorAll('.stab').forEach((el,i)=>el.classList.toggle('active',['chat','voice','video'][i]===t));['chat','voice','video'].forEach(x=>document.getElementById(`tab-${x}`).classList.toggle('active',x===t));};
-window.toggleSidebar=()=>document.getElementById('sidebar').classList.toggle('open');
+window.setTab=t=>{
+  document.querySelectorAll('.stab').forEach((el,i)=>el.classList.toggle('active',['chat','voice','video'][i]===t));
+  ['chat','voice','video'].forEach(x=>document.getElementById(`tab-${x}`).classList.toggle('active',x===t));
+  // Clear unread when switching to chat tab
+  if(t==='chat'){ unreadChat=0; updateChatBadge(); }
+};
+window.toggleSidebar=()=>{
+  const sb = document.getElementById('sidebar');
+  const fab = document.querySelector('.mob-chat-btn');
+  sb.classList.toggle('open');
+  // Sync fab position class with sidebar state
+  if(fab) fab.classList.toggle('sidebar-open', sb.classList.contains('open'));
+  // Clear unread if opening sidebar with chat active
+  if(sb.classList.contains('open') && document.getElementById('tab-chat')?.classList.contains('active')){
+    unreadChat=0; updateChatBadge();
+  }
+};
 window.showPage=showPage;
 
 /* Keyboard shortcuts */
@@ -1525,6 +2095,15 @@ window.dismissPWA=()=>{document.getElementById('pwa-banner').classList.remove('s
 window.addEventListener('appinstalled',()=>{notify('SpinCircle installed!','s');document.getElementById('pwa-banner').classList.remove('show');});
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ── Auto-rejoin on page load if session exists ──
+(async()=>{
+  const sess = getSavedSession();
+  if(sess && fbOK){
+    notify('Attempting to rejoin…','i');
+    await attemptRejoin();
+  }
+})();
 </script>
 </body>
 </html>
