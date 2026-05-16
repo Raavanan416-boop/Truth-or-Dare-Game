@@ -23,9 +23,6 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
-/* Disable text selection & long-press menu in game UI */
-#page-game,#page-game *:not(.reaction-picker):not(.reaction-picker *):not(.msg-reaction):not(.inp){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-#page-game .inp,#page-game textarea{-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default}
 #bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
 .page{display:none;position:relative;z-index:1;min-height:100vh}
 .page.active{display:flex}
@@ -176,7 +173,8 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 @keyframes pipP{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* GAME PAGE */
-#page-game{flex-direction:column;height:100vh;overflow:hidden}
+#page-game{flex-direction:column;height:100vh;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#page-game .inp,#page-game textarea{-webkit-user-select:text;user-select:text}
 .game-wrap{display:flex;width:100%;height:100%;overflow:hidden}
 .game-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:.65rem;gap:.45rem;overflow-y:auto;overflow-x:hidden}
 .game-main::-webkit-scrollbar{width:3px}.game-main::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
@@ -320,8 +318,6 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .leave-card p{font-size:.88rem;color:var(--m1);margin-bottom:1.5rem}
 .leave-btns{display:flex;gap:.7rem;justify-content:center}
 .leave-btns .btn{min-width:100px}
-#ov-min-players{position:fixed;inset:0;z-index:9991;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;backdrop-filter:blur(12px);padding:1rem}
-#ov-min-players.show{display:flex}
 
 /* RECONNECTING BANNER */
 #reconnect-banner{position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,rgba(251,191,36,.95),rgba(245,158,11,.95));color:#000;text-align:center;padding:.55rem 1rem;font-size:.84rem;font-weight:600;display:none;align-items:center;justify-content:center;gap:.5rem;animation:reconIn .3s ease}
@@ -345,35 +341,47 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .reaction-picker button:hover{background:var(--s3);transform:scale(1.25)}
 @keyframes rpIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
 
+/* Reaction hover button (desktop) */
+.msg-react-btn{position:absolute;top:2px;opacity:0;width:24px;height:24px;border-radius:50%;background:var(--s2);border:1px solid var(--b1);cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:50;pointer-events:none}
+.msg.left .msg-react-btn{right:-30px}
+.msg.right .msg-react-btn{left:-30px}
+.msg:hover .msg-react-btn{opacity:1;pointer-events:auto}
+.msg-react-btn:hover{background:var(--s3);border-color:var(--pu);transform:scale(1.15)}
+
+/* Who reacted overlay */
+.who-reacted-ov{position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:1rem}
+.who-reacted-ov.show{display:flex}
+.who-reacted-card{background:rgba(10,10,20,.97);border:1px solid var(--b2);border-radius:var(--r);padding:1.4rem;min-width:220px;max-width:300px;animation:scIn .2s ease;max-height:60vh;overflow-y:auto}
+.who-reacted-title{font-size:.95rem;font-weight:700;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
+.who-reacted-title .wr-emoji{font-size:1.3rem}
+.who-reacted-list{display:flex;flex-direction:column;gap:.35rem}
+.who-reacted-item{display:flex;align-items:center;gap:.5rem;font-size:.84rem;padding:.4rem .55rem;border-radius:var(--r4);background:var(--s1);border:1px solid var(--b1)}
+.who-reacted-item .wr-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pu),var(--pk));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0}
+.who-reacted-item.is-me{border-color:rgba(167,139,250,.35);color:var(--pu)}
+.who-reacted-item .wr-name{flex:1}
+.who-reacted-close{margin-top:.7rem;width:100%}
+
+/* Chat Q&A indicator bar */
+.chat-qa-bar{padding:.4rem .65rem;border-bottom:1px solid var(--b1);display:none;align-items:center;gap:.4rem;font-size:.76rem;font-weight:600;animation:msgIn .2s ease;flex-shrink:0}
+.chat-qa-bar.show{display:flex}
+.chat-qa-bar.asking{background:rgba(59,130,246,.08);color:#93c5fd;border-bottom-color:rgba(59,130,246,.25)}
+.chat-qa-bar.answering{background:rgba(244,114,182,.08);color:#f9a8d4;border-bottom-color:rgba(244,114,182,.25)}
+.chat-qa-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:phasePulse .7s ease infinite}
+
 /* MSG long-press highlight */
 .msg-bubble.long-pressing{background:rgba(167,139,250,.18)!important;transition:background .2s}
+.msg-bubble{-webkit-touch-callout:none}
 
 /* NOTIFICATION BADGE on mob-chat-btn */
 .notif-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--rd);color:#fff;font-size:.62rem;font-weight:700;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 6px rgba(239,68,68,.5)}
 .notif-badge.show{display:flex}
 
 .hidden{display:none!important}
-
-/* JOIN REQUEST POPUP */
-#join-requests-container{position:fixed;top:4.5rem;right:1rem;z-index:9000;display:flex;flex-direction:column;gap:.5rem;max-width:320px;pointer-events:none}
-.join-request-card{pointer-events:auto;background:rgba(10,10,20,.97);border:1px solid var(--b2);border-radius:var(--r2);padding:1rem;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.6);animation:nfIn .3s ease}
-.join-request-card .jr-name{font-size:.92rem;font-weight:700;color:var(--pu);margin-bottom:.1rem}
-.join-request-card .jr-msg{font-size:.78rem;color:var(--m1);margin-bottom:.7rem}
-.join-request-card .jr-btns{display:flex;gap:.5rem}
-.join-request-card .jr-btns .btn{flex:1;font-size:.78rem;padding:.45rem .6rem}
-
-/* REACTION DETAIL POPUP */
-.reaction-detail-popup{position:fixed;z-index:9500;background:rgba(10,10,20,.97);border:1px solid var(--b2);border-radius:var(--r2);padding:.7rem 1rem;min-width:140px;max-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:scIn .2s ease}
-.reaction-detail-popup .rdp-title{font-size:.88rem;margin-bottom:.4rem;display:flex;align-items:center;gap:.3rem}
-.reaction-detail-popup .rdp-list{display:flex;flex-direction:column;gap:.2rem}
-.reaction-detail-popup .rdp-item{font-size:.78rem;color:var(--m1);padding:.15rem 0}
 </style>
 </head>
 <body>
 <canvas id="bgc"></canvas>
 <div id="nc"></div>
-<div id="join-requests-container"></div>
-<div id="reaction-detail-popup" class="reaction-detail-popup" style="display:none"></div>
 
 <!-- Leave Confirm Overlay -->
 <div id="ov-leave-confirm">
@@ -383,17 +391,6 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
     <div class="leave-btns">
       <button class="btn brd" onclick="confirmLeaveYes()">Yes, Leave</button>
       <button class="btn bp" onclick="confirmLeaveNo()">No, Stay</button>
-    </div>
-  </div>
-</div>
-
-<!-- Min Players Overlay -->
-<div id="ov-min-players">
-  <div class="leave-card">
-    <h3>⚠️ Not Enough Players</h3>
-    <p>Minimum 3 players required to continue.<br>Returning to lobby…</p>
-    <div class="leave-btns">
-      <button class="btn bp" onclick="dismissMinPlayers()">OK</button>
     </div>
   </div>
 </div>
@@ -435,6 +432,11 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
     </div>
     <div id="player-list-modal"></div>
   </div>
+</div>
+
+<!-- Who Reacted Overlay -->
+<div class="who-reacted-ov" id="ov-who-reacted" onclick="closeWhoReacted(event)">
+  <div class="who-reacted-card" id="who-reacted-card"></div>
 </div>
 
 <!-- PAGE 1: MODE -->
@@ -525,8 +527,8 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
         <div class="topbar-logo">SpinCircle</div>
         <div class="topbar-right">
           <div class="room-pill hidden" id="game-room-pill"></div>
-          <!-- Players button with live count -->
-          <button class="btn bs btn-sm" id="btn-players" onclick="openPlayerList()" style="display:none;font-size:.72rem;padding:.3rem .65rem">👥 <span id="game-player-count">0</span></button>
+          <!-- Players button -->
+          <button class="btn bs btn-sm" id="btn-players" onclick="openPlayerList()" style="display:none;font-size:.72rem;padding:.3rem .65rem">👥 Players</button>
           <button class="bic" onclick="leaveGame()" title="Leave" style="font-size:.85rem">✕</button>
         </div>
       </div>
@@ -600,6 +602,10 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 
       <!-- CHAT -->
       <div class="spanel active" id="tab-chat">
+        <div class="chat-qa-bar" id="chat-qa-bar">
+          <div class="chat-qa-dot"></div>
+          <span id="chat-qa-text"></span>
+        </div>
         <div class="chat-msgs" id="chat-msgs"></div>
         <div class="chat-typing" id="chat-typing"></div>
         <div class="chat-input">
@@ -704,7 +710,7 @@ let knownPlayers = {};
 let chatMsgCount = 0, unreadChat = 0, inGamePage = false;
 let messageQueue = []; // queue unsent msgs during offline
 let isOnline = navigator.onLine;
-const REACTION_EMOJIS = ['❤️','😂','😮','😢','🔥','👍'];
+const REACTION_EMOJIS = ['❤️','😂','😮','😢','🔥','👍','😎','👏'];
 let activeReactionPicker = null; // currently open picker
 
 // ── Debug logger ──
@@ -718,23 +724,11 @@ function dbg(...args) {
 ═══════════════════════════════════════ */
 function saveSession(){
   if(mode!=='online'||!room||!myId)return;
-  const data=JSON.stringify({room,myId,myName,isHost,mode});
-  sessionStorage.setItem('sc_session',data);
-  localStorage.setItem('sc_rejoin',data);
+  sessionStorage.setItem('sc_session',JSON.stringify({room,myId,myName,isHost,mode}));
 }
-function clearSession(){
-  sessionStorage.removeItem('sc_session');
-  localStorage.removeItem('sc_rejoin');
-}
+function clearSession(){ sessionStorage.removeItem('sc_session'); }
 function getSavedSession(){
-  try{
-    // Try sessionStorage first (same-tab), then localStorage (cross-tab/refresh)
-    const ss = sessionStorage.getItem('sc_session');
-    if(ss) return JSON.parse(ss);
-    const ls = localStorage.getItem('sc_rejoin');
-    if(ls) return JSON.parse(ls);
-    return null;
-  }catch(e){return null;}
+  try{return JSON.parse(sessionStorage.getItem('sc_session'));}catch(e){return null;}
 }
 
 /* ═══════════════════════════════════════
@@ -763,17 +757,7 @@ window.confirmLeaveNo = ()=>{
 async function actualLeaveGame(){
   if(mode==='online'&&room&&myId) await remove(ref(db,`rooms/${room}/players/${myId}`));
   stopVoice(); stopVideo();
-  // Detach all Firebase listeners
-  if(room){
-    try{ off(ref(db,`rooms/${room}/game`)); }catch(e){}
-    try{ off(ref(db,`rooms/${room}/chat`)); }catch(e){}
-    try{ off(ref(db,`rooms/${room}/players`)); }catch(e){}
-    try{ off(ref(db,`rooms/${room}/state`)); }catch(e){}
-    try{ off(ref(db,`rooms/${room}/joinRequests`)); }catch(e){}
-  }
-  clearSession();
   room=''; myId=''; isHost=false; knownPlayers={}; players=[]; inGamePage=false;
-  _notifiedLeaves.clear(); _notifiedJoins.clear(); _pendingRequests.clear();
   showPage('page-mode');
 }
 
@@ -978,8 +962,6 @@ window.createRoom=async()=>{
   await set(pr,{name:myName,joined:serverTimestamp()});
   onDisconnect(pr).remove();
   document.getElementById('wait-room-code').textContent=room;
-  // Save rejoin data to localStorage
-  localStorage.setItem('sc_rejoin',JSON.stringify({room,myId,myName,isHost:true}));
   showPage('page-waiting'); listenWaitingRoom();
 };
 
@@ -987,44 +969,15 @@ window.joinRoom=async()=>{
   if(!checkFB())return;
   const c=document.getElementById('inp-room').value.trim().toUpperCase();
   if(c.length<4){notify('Enter a valid room code','w');return;}
-  const tempRoom=c;
-  const sn=await get(ref(db,`rooms/${tempRoom}`));
+  room=c; myId=push(ref(db,'_t')).key; isHost=false;
+  const sn=await get(ref(db,`rooms/${room}`));
   if(!sn.exists()){notify('Room not found!','e');return;}
-  const roomState=sn.val().state;
-
-  if(roomState==='playing'){
-    // ── GAME ALREADY STARTED → send join request for approval ──
-    const tempId=push(ref(db,'_t')).key;
-    await set(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}`),{name:myName,ts:Date.now()});
-    notify('Game in progress — join request sent to host…','i');
-    onValue(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}/status`),async snap=>{
-      const status=snap.val();
-      if(status==='accepted'){
-        off(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}/status`));
-        room=tempRoom; myId=tempId; isHost=false; mode='online';
-        const pr=ref(db,`rooms/${room}/players/${myId}`);
-        await set(pr,{name:myName,joined:serverTimestamp()});
-        onDisconnect(pr).remove();
-        notify('Accepted! Joining game… ✅','s');
-        localStorage.setItem('sc_rejoin',JSON.stringify({room,myId,myName,isHost:false}));
-        await loadOnlineGame();
-      } else if(status==='rejected'){
-        off(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}/status`));
-        notify('Your join request was denied ❌','e');
-        await remove(ref(db,`rooms/${tempRoom}/joinRequests/${tempId}`));
-      }
-    });
-  } else {
-    // ── BEFORE GAME STARTS → join directly, no approval ──
-    room=tempRoom; myId=push(ref(db,'_t')).key; isHost=false;
-    const pr=ref(db,`rooms/${room}/players/${myId}`);
-    await set(pr,{name:myName,joined:serverTimestamp()});
-    onDisconnect(pr).remove();
-    document.getElementById('wait-room-code').textContent=room;
-    localStorage.setItem('sc_rejoin',JSON.stringify({room,myId,myName,isHost:false}));
-    showPage('page-waiting'); listenWaitingRoom();
-    notify('Joined the room! ✅','s');
-  }
+  if(sn.val().state==='playing'){notify('Game already in progress!','w');return;}
+  const pr=ref(db,`rooms/${room}/players/${myId}`);
+  await set(pr,{name:myName,joined:serverTimestamp()});
+  onDisconnect(pr).remove();
+  document.getElementById('wait-room-code').textContent=room;
+  showPage('page-waiting'); listenWaitingRoom();
 };
 
 function listenWaitingRoom(){
@@ -1038,62 +991,18 @@ function listenWaitingRoom(){
   onValue(ref(db,`rooms/${room}/state`),sn=>{if(sn.val()==='playing')loadOnlineGame();});
 }
 
-/* ── Join Request System (Host-side) ── */
-let _pendingRequests = new Set();
-function listenJoinRequests(){
-  onValue(ref(db,`rooms/${room}/joinRequests`),sn=>{
-    const reqs=sn.val()||{};
-    const container=document.getElementById('join-requests-container');
-    Object.entries(reqs).forEach(([reqId,reqData])=>{
-      if(_pendingRequests.has(reqId)) return; // already showing
-      if(reqData.status) return; // already handled
-      _pendingRequests.add(reqId);
-      const card=document.createElement('div');
-      card.className='join-request-card';
-      card.id=`jr-${reqId}`;
-      card.innerHTML=`<div class="jr-name">👤 ${esc(reqData.name)}</div>
-        <div class="jr-msg">wants to join the room</div>
-        <div class="jr-btns">
-          <button class="btn bgn" onclick="approveJoin('${reqId}')">✓ Accept</button>
-          <button class="btn brd" onclick="rejectJoin('${reqId}')">✕ Reject</button>
-        </div>`;
-      container.appendChild(card);
-      sfx('pop');
-    });
-  });
-}
-
-window.approveJoin=async(reqId)=>{
-  await update(ref(db,`rooms/${room}/joinRequests/${reqId}`),{status:'accepted'});
-  document.getElementById(`jr-${reqId}`)?.remove();
-  _pendingRequests.delete(reqId);
-  notify('Player accepted ✅','s');
-};
-
-window.rejectJoin=async(reqId)=>{
-  await update(ref(db,`rooms/${room}/joinRequests/${reqId}`),{status:'rejected'});
-  document.getElementById(`jr-${reqId}`)?.remove();
-  _pendingRequests.delete(reqId);
-  notify('Player rejected','w');
-};
-
 window.hostStart=async()=>{
   const sn=await get(ref(db,`rooms/${room}/players`));
   const names=Object.values(sn.val()||{}).map(p=>p.name);
   if(names.length<3){notify('Need at least 3!','w');return;}
   const sp=names[Math.floor(Math.random()*names.length)];
+  // Clear old chat before starting new game
+  await remove(ref(db,`rooms/${room}/chat`));
   await update(ref(db,`rooms/${room}`),{state:'playing','game/spinner':sp,'game/target':null,'game/prevSpinner':null,'game/phase':'idle','game/type':null});
 };
 
 window.copyRoomCode=()=>navigator.clipboard.writeText(room).then(()=>notify('Room code copied!','s'));
-window.leaveRoom=async()=>{
-  if(room&&myId) await remove(ref(db,`rooms/${room}/players/${myId}`));
-  try{ off(ref(db,`rooms/${room}/players`)); }catch(e){}
-  try{ off(ref(db,`rooms/${room}/state`)); }catch(e){}
-  clearSession();
-  room=''; myId=''; isHost=false;
-  showPage('page-online-lobby');
-};
+window.leaveRoom=async()=>{if(room&&myId)await remove(ref(db,`rooms/${room}/players/${myId}`));room='';myId='';isHost=false;showPage('page-online-lobby');};
 
 async function loadOnlineGame(){
   off(ref(db,`rooms/${room}/state`));
@@ -1106,61 +1015,45 @@ async function loadOnlineGame(){
   Object.entries(ps).forEach(([id,p])=>{knownPlayers[id]=p;});
   PT.init(players);
   initGameScreen(true);
+  // Host clears ALL old chat before starting listeners (prevents duplicate msgs)
+  if(isHost) await remove(ref(db,`rooms/${room}/chat`));
   listenGameState(); listenChat(); listenPlayers(); listenReactions();
-  // Host: listen for mid-game join requests
-  if(isHost) listenJoinRequests();
-  // All: listen for room state changes (e.g. paused due to <3 players)
-  listenRoomStateDuringGame();
-  addSysMsg('Game started! 🍾');
+  // Only host sends 'Game started' to prevent duplicate system messages
+  if(isHost) addSysMsg('Game started! 🍾');
   saveSession();
 }
 
 /* ── Listen for player join/leave (KEEPS knownPlayers fresh) ── */
-let _notifiedLeaves = new Set(); // prevent duplicate "Player Left" messages
-let _notifiedJoins = new Set();
 function listenPlayers(){
   onValue(ref(db,`rooms/${room}/players`),async sn=>{
     const now=sn.val()||{};
     const nowNames = Object.values(now).map(p=>p.name);
-    const nowIds = new Set(Object.keys(now));
-    // Join notifications — only once per unique ID
+    // Join notifications — only HOST writes sys msgs to prevent duplicates
     Object.entries(now).forEach(([id,p])=>{
-      if(!knownPlayers[id]&&Object.keys(knownPlayers).length>0&&!_notifiedJoins.has(id)){
-        _notifiedJoins.add(id);
-        gameNotify(`${p.name} joined the room`,'s'); addSysMsg(`${p.name} joined`);
+      if(!knownPlayers[id]&&Object.keys(knownPlayers).length>0){
+        gameNotify(`${p.name} joined the room`,'s');
+        if(isHost) addSysMsg(`${p.name} joined`);
       }
     });
-    // Leave notifications — only once per unique ID
+    // Leave notifications + auto-skip if leaver is current spinner/target
     Object.entries(knownPlayers).forEach(([id,p])=>{
-      if(!now[id]&&!_notifiedLeaves.has(id)){
-        _notifiedLeaves.add(id);
-        gameNotify(`${p.name} left the room`,'w'); addSysMsg(`${p.name} left`);
+      if(!now[id]){
+        gameNotify(`${p.name} left the room`,'w');
+        if(isHost) addSysMsg(`${p.name} left`);
       }
     });
-    // Clean up old tracked IDs that rejoined
-    _notifiedLeaves.forEach(id=>{ if(nowIds.has(id)) _notifiedLeaves.delete(id); });
-    _notifiedJoins.forEach(id=>{ if(!nowIds.has(id)) _notifiedJoins.delete(id); });
-
     knownPlayers=now;
     // Update players list with currently connected players
     if(nowNames.length > 0) players = nowNames;
-
-    // ═══ MINIMUM 3 PLAYERS CHECK ═══
-    // If players drop below 3, host pauses the game → all return to lobby
-    if(isHost && nowNames.length < 3 && nowNames.length > 0){
-      addSysMsg('⚠️ Less than 3 players — game paused.');
-      await update(ref(db,`rooms/${room}`),{state:'waiting'});
-      return; // listenRoomStateDuringGame will handle the UI transition
-    }
-
     // ── AUTO-SKIP: if spinner or target left, advance game ──
-    if(isHost && nowNames.length >= 3){
+    if(isHost && nowNames.length >= 2){
       const gs = await get(ref(db,`rooms/${room}/game`));
       const g = gs.val();
       if(g){
         const spinnerGone = g.spinner && !nowNames.includes(g.spinner);
         const targetGone = g.target && !nowNames.includes(g.target);
         if(spinnerGone){
+          // Pick a new spinner from remaining players
           const newSpinner = nowNames[Math.floor(Math.random()*nowNames.length)];
           await update(ref(db,`rooms/${room}/game`),{
             spinner:newSpinner, target:null, type:null, phase:'idle',
@@ -1168,6 +1061,7 @@ function listenPlayers(){
           });
           addSysMsg(`${g.spinner} left — ${newSpinner} is now spinning!`);
         } else if(targetGone && (g.phase==='spun'||g.phase==='chosen')){
+          // Target left mid-turn, reset to idle so spinner can re-spin
           await update(ref(db,`rooms/${room}/game`),{
             target:null, type:null, phase:'idle', spinTrigger:null, chatPhase:null
           });
@@ -1175,46 +1069,9 @@ function listenPlayers(){
         }
       }
     }
-    // Update live player count in topbar
-    const countEl=document.getElementById('game-player-count');
-    if(countEl) countEl.textContent=nowNames.length;
-    renderVoiceUserList();
+    renderVoiceUserList(); // refresh voice list with updated names
   });
 }
-
-/* ── Listen for room state changes during active game ── */
-function listenRoomStateDuringGame(){
-  onValue(ref(db,`rooms/${room}/state`),sn=>{
-    const st=sn.val();
-    if(st==='waiting' && inGamePage){
-      // Game was paused (e.g. <3 players) → return everyone to lobby
-      returnToLobby();
-    }
-  });
-}
-
-/* ── Return all players to the waiting lobby ── */
-function returnToLobby(){
-  // Show the min-players overlay
-  document.getElementById('ov-min-players').classList.add('show');
-  // Stop voice/video
-  stopVoice(); stopVideo();
-  // Clean up game state listeners
-  try{ off(ref(db,`rooms/${room}/game`)); }catch(e){}
-  try{ off(ref(db,`rooms/${room}/chat`)); }catch(e){}
-  try{ off(ref(db,`rooms/${room}/players`)); }catch(e){}
-  try{ off(ref(db,`rooms/${room}/state`)); }catch(e){}
-  inGamePage=false;
-  _notifiedLeaves.clear(); _notifiedJoins.clear();
-}
-
-window.dismissMinPlayers=()=>{
-  document.getElementById('ov-min-players').classList.remove('show');
-  // Re-enter the waiting room
-  document.getElementById('wait-room-code').textContent=room;
-  showPage('page-waiting');
-  listenWaitingRoom();
-};
 
 /* ═══════════════════════════════════════════════════
    GAME SCREEN INIT — only called once per game start
@@ -1229,9 +1086,6 @@ function initGameScreen(online){
 
   // Show Players button for both modes
   document.getElementById('btn-players').style.display='';
-  // Set initial player count
-  const countEl=document.getElementById('game-player-count');
-  if(countEl) countEl.textContent=players.length;
 
   // ── RESET only game-session state, NOT players list ──
   gameHistory=[];
@@ -1521,7 +1375,7 @@ function animBottleToAngle(absAngle,durationMs,onDone){
   sfx('spin');
   setTimeout(()=>{
     svg.classList.remove('spin-anim');
-    spinning=false; 
+    spinning=false;
     dbg('animBottleToAngle done, angle=',absAngle);
     onDone?.();
   },durationMs);
@@ -1533,9 +1387,11 @@ function animBottleToAngle(absAngle,durationMs,onDone){
 function listenGameState(){
   onValue(ref(db,`rooms/${room}/game`),sn=>{
     const g=sn.val(); if(!g)return;
-    const prevTrig=G.spinTrigger, prevPhase=G.phase;
-    G={...G,...g};
-    dbg('listenGameState', {prevPhase, newPhase:G.phase, spinTrigger:G.spinTrigger});
+    const prevTrig=G.spinTrigger, prevPhase=G.phase, prevChatPhase=G.chatPhase;
+    // FIX: Firebase removes keys set to null, so chatPhase/spinTrigger
+    // would persist in local G. Explicitly reset before merge.
+    G={...G, chatPhase:null, spinTrigger:null, ...g};
+    dbg('listenGameState', {prevPhase, newPhase:G.phase, prevChatPhase, newChatPhase:G.chatPhase, spinTrigger:G.spinTrigger});
 
     // New spin trigger → NON-SPINNER clients animate with the EXACT same angle
     if(G.spinTrigger && G.spinTrigger!==prevTrig && !spinning){
@@ -1564,45 +1420,52 @@ function listenGameState(){
     }
 
     renderGame();
+    updateQABar();
 
-    // Auto-open chat for Q&A flow — ONLY when chatPhase transitions
-    const prevChatPhase = prevPhase==='idle' ? null : undefined; // don't trigger on initial load
-    if(G.chatPhase==='q' && G.spinner===myName && prevChatPhase!==undefined){
-      // Spinner: auto-open chat to ask question
+    // ── Q&A flow: trigger ONLY on chatPhase TRANSITION ──
+    if(G.chatPhase==='q' && prevChatPhase!=='q' && G.spinner===myName){
       setTab('chat');
       const sb=document.getElementById('sidebar');
-      sb.classList.add('open');
-      const fab=document.querySelector('.mob-chat-btn');
-      if(fab) fab.classList.add('sidebar-open');
-      setTimeout(()=>document.getElementById('chat-inp').focus(),200);
-      gameNotify('Your turn to ask a question!','i');
+      if(!sb.classList.contains('open')&&window.innerWidth<=700) sb.classList.add('open');
+      const inp=document.getElementById('chat-inp');
+      inp.placeholder='Ask your question…';
+      inp.focus();
+      gameNotify('Your turn to ask a question! ❓','i');
     }
-    if(G.chatPhase==='a' && G.target===myName){
-      // Target: auto-open chat to answer
+    if(G.chatPhase==='a' && prevChatPhase!=='a' && G.target===myName){
       setTab('chat');
       const sb=document.getElementById('sidebar');
-      sb.classList.add('open');
-      const fab=document.querySelector('.mob-chat-btn');
-      if(fab) fab.classList.add('sidebar-open');
-      setTimeout(()=>document.getElementById('chat-inp').focus(),200);
-      gameNotify('Your turn to answer!','i');
+      if(!sb.classList.contains('open')&&window.innerWidth<=700) sb.classList.add('open');
+      const inp=document.getElementById('chat-inp');
+      inp.placeholder='Type your answer…';
+      inp.focus();
+      gameNotify('Your turn to answer! 🎤','i');
     }
-    if(G.chatPhase===null && g.phase==='chosen'){
-      // Answer was sent — auto-close sidebar on mobile after short delay
-      setTimeout(()=>{
-        if(window.innerWidth<=700){
-          const sb=document.getElementById('sidebar');
-          sb.classList.remove('open');
-          const fab=document.querySelector('.mob-chat-btn');
-          if(fab) fab.classList.remove('sidebar-open');
-        }
-      },800);
+    // Reset placeholder when Q&A is done
+    if(!G.chatPhase && prevChatPhase){
+      document.getElementById('chat-inp').placeholder='Say something…';
     }
   });
   onValue(ref(db,`rooms/${room}/history`),sn=>{
     gameHistory=sn.val()?Object.values(sn.val()).sort((a,b)=>a.ts-b.ts):[];
     renderHistory();
   });
+}
+
+/* ── Q&A Status Bar ── */
+function updateQABar(){
+  const bar=document.getElementById('chat-qa-bar');
+  const txt=document.getElementById('chat-qa-text');
+  if(!bar||!txt)return;
+  if(G.chatPhase==='q'){
+    bar.className='chat-qa-bar show asking';
+    txt.textContent=G.spinner===myName?`Ask ${G.target} a ${G.type||'Truth'} question!`:`Waiting for ${G.spinner} to ask…`;
+  } else if(G.chatPhase==='a'){
+    bar.className='chat-qa-bar show answering';
+    txt.textContent=G.target===myName?`Answer ${G.spinner}'s question!`:`Waiting for ${G.target} to answer…`;
+  } else {
+    bar.className='chat-qa-bar';
+  }
 }
 
 /* ── Truth / Dare ── */
@@ -1697,33 +1560,38 @@ function listenChat(){
   });
 }
 
+// Store reactions data for who-reacted lookups
+let chatReactionsData = {}; // msgKey -> {emoji -> [{uid, name}]}
+
 function renderChatMessages(msgs){
   const el=document.getElementById('chat-msgs');
+  chatReactionsData = {}; // reset
   el.innerHTML=msgs.map((m,i)=>{
     if(m.sys)return`<div class="msg sys"><div class="msg-bubble sys-text">— ${esc(m.text)} —</div></div>`;
     const mine=m.name===myName, align=mine?'right':'left', tag=m.tag||'';
     const timeStr=m.ts?fmtTime(m.ts):'';
     const msgKey = chatMsgKeys[i]||'';
-    // Build reactions display
+    // Build reactions display with user tracking
     let reactionsHtml = '';
     if(m.reactions){
       const grouped = {};
       Object.entries(m.reactions).forEach(([uid,emoji])=>{
-        if(!grouped[emoji]) grouped[emoji]={count:0,mine:false,names:[]};
+        if(!grouped[emoji]) grouped[emoji]={count:0,mine:false,users:[]};
         grouped[emoji].count++;
         if(uid===myId) grouped[emoji].mine=true;
-        // Resolve user name from knownPlayers or fallback
-        const uname = uid===myId ? myName : (knownPlayers[uid]?.name || 'Someone');
-        grouped[emoji].names.push(uname);
+        const uname = uid===myId ? myName : (knownPlayers[uid]?.name || 'Player');
+        grouped[emoji].users.push({uid, name:uname});
       });
+      // Store for who-reacted popup
+      chatReactionsData[msgKey] = grouped;
       reactionsHtml = '<div class="msg-reactions">' +
-        Object.entries(grouped).map(([emoji,d])=>{
-          const namesAttr = esc(d.names.join(','));
-          return `<span class="msg-reaction${d.mine?' mine':''}" onclick="handleReactionClick(event,'${msgKey}','${emoji}')" data-names="${namesAttr}">`+
-          `<span class="r-emoji">${emoji}</span><span class="r-count">${d.count}</span></span>`;
-        }
+        Object.entries(grouped).map(([emoji,d])=>
+          `<span class="msg-reaction${d.mine?' mine':''}" onclick="showWhoReacted('${msgKey}','${emoji}')" oncontextmenu="event.preventDefault();toggleReaction('${msgKey}','${emoji}')">`+
+          `<span class="r-emoji">${emoji}</span><span class="r-count">${d.count}</span></span>`
         ).join('') + '</div>';
     }
+    // Desktop hover reaction button
+    const reactBtn = `<button class="msg-react-btn" onclick="event.stopPropagation();openReactBtnPicker(this,'${msgKey}')" title="React">😀</button>`;
     return`<div class="msg ${align} ${tag}" data-msgkey="${msgKey}" style="position:relative">
       <div class="msg-meta">
         <span class="msg-name">${esc(m.name)}${tag==='ask'?' 🔵':tag==='ans'?' 🎤':''}</span>
@@ -1731,31 +1599,55 @@ function renderChatMessages(msgs){
       </div>
       <div class="msg-bubble">${esc(m.text)}</div>
       ${reactionsHtml}
+      ${reactBtn}
     </div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
-  // Attach long-press listeners for reactions
-  setupLongPress();
+  // Attach interaction listeners for reactions
+  setupReactionListeners();
 }
 
-/* ── Message Reactions (long-press) ── */
+/* ═══════════════════════════════════════════════════
+   EMOJI REACTION SYSTEM
+   — Mobile: long-press on message
+   — Desktop: hover button OR right-click on message
+   — Click reaction badge: show who reacted
+═══════════════════════════════════════════════════ */
 let lpTimer = null, lpTarget = null;
-function setupLongPress(){
+
+function setupReactionListeners(){
   document.querySelectorAll('.msg[data-msgkey]').forEach(el=>{
     const key = el.dataset.msgkey;
     if(!key) return;
     const bubble = el.querySelector('.msg-bubble');
     if(!bubble) return;
-    // Touch
-    bubble.addEventListener('touchstart', e=>{ lpTarget=el; lpTimer=setTimeout(()=>showReactionPicker(el,key),500); bubble.classList.add('long-pressing'); }, {passive:true});
+
+    // ── Mobile: long-press ──
+    bubble.addEventListener('touchstart', e=>{
+      lpTarget=el;
+      lpTimer=setTimeout(()=>{
+        e.preventDefault();
+        showReactionPicker(el,key);
+      },450);
+      bubble.classList.add('long-pressing');
+    }, {passive:false});
     bubble.addEventListener('touchend', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
     bubble.addEventListener('touchmove', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
-    // Mouse (desktop)
-    bubble.addEventListener('mousedown', e=>{ if(e.button!==0)return; lpTarget=el; lpTimer=setTimeout(()=>showReactionPicker(el,key),500); bubble.classList.add('long-pressing'); });
-    bubble.addEventListener('mouseup', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
-    bubble.addEventListener('mouseleave', ()=>{ clearTimeout(lpTimer); bubble.classList.remove('long-pressing'); });
+
+    // ── Desktop: right-click ──
+    bubble.addEventListener('contextmenu', e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      showReactionPicker(el,key);
+    });
   });
 }
+
+// Desktop hover button click opens picker
+window.openReactBtnPicker = (btn, msgKey)=>{
+  const msgEl = btn.closest('.msg[data-msgkey]');
+  if(msgEl) showReactionPicker(msgEl, msgKey);
+};
 
 function showReactionPicker(msgEl, msgKey){
   hideReactionPicker();
@@ -1763,7 +1655,7 @@ function showReactionPicker(msgEl, msgKey){
   picker.className = 'reaction-picker show';
   picker.id = 'active-reaction-picker';
   picker.innerHTML = REACTION_EMOJIS.map(e=>
-    `<button onclick="addReaction('${msgKey}','${e}')">${e}</button>`
+    `<button onclick="event.stopPropagation();addReaction('${msgKey}','${e}')">${e}</button>`
   ).join('');
   msgEl.appendChild(picker);
   activeReactionPicker = picker;
@@ -1772,6 +1664,8 @@ function showReactionPicker(msgEl, msgKey){
   picker.style.bottom = '100%';
   picker.style[isRight?'right':'left'] = '0';
   picker.style.marginBottom = '4px';
+  // Prevent immediate close from document click
+  setTimeout(()=>{ picker._ready=true; },50);
 }
 
 function hideReactionPicker(){
@@ -1780,20 +1674,30 @@ function hideReactionPicker(){
   activeReactionPicker = null;
 }
 
-// Close picker + reaction detail popup on outside click
+// Close picker on outside click/touch
 document.addEventListener('click', e=>{
-  if(activeReactionPicker && !activeReactionPicker.contains(e.target)){
+  if(activeReactionPicker && activeReactionPicker._ready && !activeReactionPicker.contains(e.target)){
     hideReactionPicker();
   }
-  const rdp = document.getElementById('reaction-detail-popup');
-  if(rdp && rdp.style.display!=='none' && !rdp.contains(e.target) && !e.target.closest('.msg-reaction')){
-    rdp.style.display='none';
+});
+document.addEventListener('touchstart', e=>{
+  if(activeReactionPicker && activeReactionPicker._ready && !activeReactionPicker.contains(e.target)){
+    hideReactionPicker();
   }
+}, {passive:true});
+
+// Prevent browser context menu on chat area
+document.addEventListener('DOMContentLoaded', ()=>{
+  const chatMsgs = document.getElementById('chat-msgs');
+  if(chatMsgs) chatMsgs.addEventListener('contextmenu', e=>{
+    if(e.target.closest('.msg-bubble')) e.preventDefault();
+  });
 });
 
 window.addReaction = async(msgKey, emoji)=>{
   hideReactionPicker();
   if(!room || !myId) return;
+  sfx('click');
   await set(ref(db,`rooms/${room}/chat/${msgKey}/reactions/${myId}`), emoji);
 };
 
@@ -1804,26 +1708,39 @@ window.toggleReaction = async(msgKey, emoji)=>{
   if(sn.exists() && sn.val()===emoji){
     await remove(rRef);
   } else {
+    sfx('click');
     await set(rRef, emoji);
   }
 };
 
-// Handle reaction click: show who reacted
-window.handleReactionClick = (event, msgKey, emoji)=>{
-  event.stopPropagation();
-  const el = event.currentTarget;
-  const names = (el.dataset.names||'').split(',').filter(Boolean);
-  if(names.length === 0) return;
-  // Show detail popup near the clicked element
-  const rdp = document.getElementById('reaction-detail-popup');
-  const rect = el.getBoundingClientRect();
-  rdp.innerHTML = `<div class="rdp-title"><span class="r-emoji" style="font-size:1.1rem">${emoji}</span> <span style="color:var(--m1);font-size:.78rem">${names.length}</span></div>
-    <div class="rdp-list">${names.map(n=>`<div class="rdp-item">• ${esc(n)}</div>`).join('')}</div>`;
-  rdp.style.display = 'block';
-  rdp.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
-  rdp.style.top = Math.max(0, rect.top - rdp.offsetHeight - 6) + 'px';
-  // Also toggle the reaction
-  toggleReaction(msgKey, emoji);
+/* ── Who Reacted Popup ── */
+window.showWhoReacted = (msgKey, emoji)=>{
+  const data = chatReactionsData[msgKey];
+  if(!data || !data[emoji]) return;
+  const users = data[emoji].users;
+  const card = document.getElementById('who-reacted-card');
+  card.innerHTML = `
+    <div class="who-reacted-title">
+      <span class="wr-emoji">${emoji}</span>
+      <span>Reacted by ${users.length}</span>
+    </div>
+    <div class="who-reacted-list">
+      ${users.map(u=>`
+        <div class="who-reacted-item${u.uid===myId?' is-me':''}">
+          <div class="wr-avatar">${(u.name[0]||'?').toUpperCase()}</div>
+          <span class="wr-name">${esc(u.name)}${u.uid===myId?' (you)':''}</span>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn bs btn-block btn-sm who-reacted-close" onclick="closeWhoReacted(event)">Close</button>
+  `;
+  document.getElementById('ov-who-reacted').classList.add('show');
+};
+
+window.closeWhoReacted = (e)=>{
+  if(e.target===document.getElementById('ov-who-reacted') || e.target.closest('.who-reacted-close')){
+    document.getElementById('ov-who-reacted').classList.remove('show');
+  }
 };
 
 function listenReactions(){
@@ -1864,7 +1781,7 @@ let vSigListeners={};
 
 window.joinVoice=async()=>{
   try{
-    lVoice=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+    lVoice=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
     voiceMuted=false;
     document.getElementById('voice-status').textContent='🟢 Connected';
     document.getElementById('btn-join-voice').style.display='none';
@@ -1976,10 +1893,10 @@ function newVoicePC(pid){
   };
   pc.ontrack=e=>{
     console.log('[Voice] got remote track from',pid);
-    // Remove old audio element FIRST to prevent duplicate playback
-    document.getElementById(`vaudio-${pid}`)?.remove();
     const a=document.createElement('audio');a.autoplay=true;a.id=`vaudio-${pid}`;
     a.srcObject=e.streams[0];
+    // Remove old audio element if exists
+    document.getElementById(`vaudio-${pid}`)?.remove();
     document.body.appendChild(a);
     detectRemoteVoice(e.streams[0],pid);
   };
@@ -2094,7 +2011,7 @@ let vidIceAdded={}, vidSigListeners={};
 
 window.startVideo=async()=>{
   try{
-    lVideo=await navigator.mediaDevices.getUserMedia({video:true,audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    lVideo=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
     videoActive=true;camOff=false;vidMicOff=false;
     document.getElementById('vid-start-area').style.display='none';
     document.getElementById('vid-controls').classList.add('show');
@@ -2337,6 +2254,20 @@ window.addEventListener('appinstalled',()=>{notify('SpinCircle installed!','s');
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
+// ── Prevent text selection & copy in game page ──
+document.addEventListener('copy', e=>{
+  if(document.querySelector('#page-game.active')) { e.preventDefault(); }
+});
+document.addEventListener('cut', e=>{
+  if(document.querySelector('#page-game.active')) { e.preventDefault(); }
+});
+document.addEventListener('selectstart', e=>{
+  if(!document.querySelector('#page-game.active')) return;
+  // Allow selection only inside input/textarea
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  e.preventDefault();
+});
+
 // ── Auto-rejoin on page load if session exists ──
 (async()=>{
   const sess = getSavedSession();
@@ -2345,13 +2276,6 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
     await attemptRejoin();
   }
 })();
-
-// ── Prevent context menu (long-press copy/select/translate) in game page ──
-document.getElementById('page-game').addEventListener('contextmenu', e=>{
-  // Allow context menu on inputs and textareas
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
-  e.preventDefault();
-});
 </script>
 </body>
 </html>
