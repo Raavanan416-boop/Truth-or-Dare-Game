@@ -261,6 +261,22 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .chat-input .inp{flex:1;min-width:0;font-size:.84rem;margin-bottom:0;border-radius:10px;padding:.48rem .78rem}
 .chat-send{width:36px;height:36px;border-radius:50%;background:var(--pu);border:none;color:#fff;cursor:pointer;font-size:.88rem;transition:opacity .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .chat-send:hover{opacity:.84}
+.chat-share-btn{width:36px;height:36px;border-radius:50%;background:var(--s2);border:1px solid var(--b1);color:var(--m1);cursor:pointer;font-size:.92rem;transition:all .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-share-btn:hover{color:var(--tx);border-color:var(--b2);background:var(--s3)}
+.chat-share-btn.sharing{background:rgba(239,68,68,.15);border-color:var(--rd);color:var(--rd);animation:sharePulse 1.5s ease infinite}
+@keyframes sharePulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+
+/* SCREEN SHARE OVERLAY */
+#screen-share-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.95);display:none;flex-direction:column;align-items:center;justify-content:center;padding:.8rem;animation:ssIn .3s ease}
+#screen-share-overlay.show{display:flex}
+@keyframes ssIn{from{opacity:0}to{opacity:1}}
+.ss-header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1200px;padding:.5rem .8rem;flex-shrink:0}
+.ss-title{display:flex;align-items:center;gap:.5rem;font-size:.88rem;font-weight:600}
+.ss-live-badge{background:var(--rd);color:#fff;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:6px;animation:sharePulse 1.5s ease infinite}
+.ss-sharer-name{color:var(--pu);font-weight:600}
+.ss-video-wrap{flex:1;width:100%;max-width:1200px;display:flex;align-items:center;justify-content:center;min-height:0;padding:.4rem 0}
+.ss-video-wrap video{max-width:100%;max-height:100%;border-radius:var(--r2);border:1px solid var(--b2);object-fit:contain;background:#000}
+.ss-controls{display:flex;gap:.6rem;padding:.5rem 0;flex-shrink:0}
 
 /* VIDEO */
 .video-panel-wrap{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
@@ -439,6 +455,23 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
   <div class="who-reacted-card" id="who-reacted-card"></div>
 </div>
 
+<!-- Screen Share Overlay -->
+<div id="screen-share-overlay">
+  <div class="ss-header">
+    <div class="ss-title">
+      <span class="ss-live-badge">● LIVE</span>
+      <span>Screen shared by <span class="ss-sharer-name" id="ss-sharer-name">—</span></span>
+    </div>
+    <button class="btn brd btn-sm" id="ss-close-btn" onclick="closeScreenShareViewer()">✕ Close</button>
+  </div>
+  <div class="ss-video-wrap">
+    <video id="ss-video" autoplay playsinline></video>
+  </div>
+  <div class="ss-controls">
+    <button class="btn brd" id="ss-stop-btn" onclick="stopScreenShare()" style="display:none">⏹ Stop Sharing</button>
+  </div>
+</div>
+
 <!-- PAGE 1: MODE -->
 <div class="page active" id="page-mode">
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:2rem 1rem;gap:1.5rem">
@@ -610,6 +643,7 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
         <div class="chat-typing" id="chat-typing"></div>
         <div class="chat-input">
           <input class="inp" id="chat-inp" placeholder="Say something…" maxlength="200" autocomplete="off" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-share-btn" id="btn-screen-share" onclick="toggleScreenShare()" title="Screen Share">🖥️</button>
           <button class="chat-send" onclick="sendChat()">↑</button>
         </div>
       </div>
@@ -1017,7 +1051,7 @@ async function loadOnlineGame(){
   initGameScreen(true);
   // Host clears ALL old chat before starting listeners (prevents duplicate msgs)
   if(isHost) await remove(ref(db,`rooms/${room}/chat`));
-  listenGameState(); listenChat(); listenPlayers(); listenReactions();
+  listenGameState(); listenChat(); listenPlayers(); listenReactions(); listenScreenShare();
   // Only host sends 'Game started' to prevent duplicate system messages
   if(isHost) addSysMsg('Game started! 🍾');
   saveSession();
@@ -1754,7 +1788,24 @@ window.sendChat=async()=>{
   try{
     const gs=await get(ref(db,`rooms/${room}/game`));const g=gs.val()||{};
     if(g.chatPhase==='q'&&g.spinner===myName){msgData.tag='ask';await update(ref(db,`rooms/${room}/game`),{chatPhase:'a'});addSysMsg(`${myName} asked! ${g.target}, answer in chat.`);gameNotify('Question sent! ❓','s');}
-    else if(g.chatPhase==='a'&&g.target===myName){msgData.tag='ans';await update(ref(db,`rooms/${room}/game`),{chatPhase:null});addSysMsg(`${myName} answered!`);gameNotify('Answer sent! ✅','s');}
+    else if(g.chatPhase==='a'&&g.target===myName){
+      msgData.tag='ans';
+      await update(ref(db,`rooms/${room}/game`),{chatPhase:null});
+      addSysMsg(`${myName} answered!`);
+      gameNotify('Answer sent! ✅','s');
+      // ── AUTO-CLOSE: close chat box after answer is sent ──
+      setTimeout(()=>{
+        const sb = document.getElementById('sidebar');
+        const fab = document.querySelector('.mob-chat-btn');
+        // Close mobile sidebar
+        if(window.innerWidth <= 700 && sb.classList.contains('open')){
+          sb.classList.remove('open');
+          if(fab) fab.classList.remove('sidebar-open');
+        }
+        // Reset chat input placeholder
+        document.getElementById('chat-inp').placeholder = 'Say something…';
+      }, 1500);
+    }
     if(isOnline){
       await push(ref(db,`rooms/${room}/chat`),msgData);
     } else {
@@ -2267,6 +2318,216 @@ document.addEventListener('selectstart', e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
   e.preventDefault();
 });
+
+/* ═══════════════════════════════════════════════════
+   SCREEN SHARE — All players see & hear the shared screen
+   Uses per-pair WebRTC signaling (same pattern as voice/video)
+═══════════════════════════════════════════════════ */
+let screenStream = null, screenSharing = false;
+let ssPCs = {}, ssIceAdded = {}, ssSigListeners = {};
+function ssPairKey(a,b){return a<b?`${a}__${b}`:`${b}__${a}`;}
+
+window.toggleScreenShare = async()=>{
+  if(screenSharing) { stopScreenShare(); return; }
+  if(mode==='offline'){ notify('Screen share is online only','w'); return; }
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:true});
+    screenSharing = true;
+    const btn = document.getElementById('btn-screen-share');
+    btn.classList.add('sharing');
+    btn.title = 'Stop Screen Share';
+    // Show local preview in overlay
+    showScreenShareOverlay(myName, screenStream, true);
+    // Announce in Firebase
+    if(room){
+      await set(ref(db,`rooms/${room}/screenShare`),{sharer:myId,sharerName:myName,ts:Date.now()});
+      onDisconnect(ref(db,`rooms/${room}/screenShare`)).remove();
+      setupScreenShareSignaling();
+      addSysMsg(`${myName} started screen sharing 🖥️`);
+    }
+    notify('Screen sharing started 🖥️','s');
+    // Auto-stop when user clicks browser "Stop sharing"
+    screenStream.getVideoTracks()[0].addEventListener('ended', ()=>{
+      stopScreenShare();
+    });
+  } catch(e){
+    if(e.name !== 'NotAllowedError') notify('Screen share failed','e');
+  }
+};
+
+function setupScreenShareSignaling(){
+  // Listen for peers to connect to my screen share
+  onValue(ref(db,`rooms/${room}/players`), async sn=>{
+    if(!screenSharing || !screenStream) return;
+    const ps = sn.val()||{};
+    const peerIds = Object.keys(ps).filter(id=>id!==myId);
+    for(const pid of peerIds){
+      if(!ssPCs[pid]){
+        await createScreenShareOffer(pid);
+      }
+    }
+    // Clean up departed peers
+    Object.keys(ssPCs).forEach(pid=>{
+      if(!ps[pid]){
+        try{ssPCs[pid].close();}catch(e){}
+        delete ssPCs[pid]; delete ssIceAdded[pid];
+        const pk=ssPairKey(myId,pid);
+        if(ssSigListeners[pk]){off(ref(db,`rooms/${room}/ssSig/${pk}`));delete ssSigListeners[pk];}
+      }
+    });
+  });
+}
+
+async function createScreenShareOffer(pid){
+  console.log('[ScreenShare] creating offer to',pid);
+  const pc = newScreenSharePC(pid, true);
+  const pk = ssPairKey(myId, pid);
+  await remove(ref(db,`rooms/${room}/ssSig/${pk}`));
+  ssIceAdded[pid]=new Set();
+  if(screenStream) screenStream.getTracks().forEach(t=>pc.addTrack(t,screenStream));
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await set(ref(db,`rooms/${room}/ssSig/${pk}/offer`),JSON.stringify(offer));
+  await set(ref(db,`rooms/${room}/ssSig/${pk}/offerer`),myId);
+  listenScreenSharePairSignal(pid);
+}
+
+async function answerScreenShareOffer(sharerId){
+  const pk = ssPairKey(myId, sharerId);
+  const sn = await get(ref(db,`rooms/${room}/ssSig/${pk}`));
+  const sd = sn.val();
+  if(!sd||!sd.offer||sd.offerer===myId) return;
+  if(ssPCs[sharerId]) return;
+  console.log('[ScreenShare] answering offer from',sharerId);
+  const pc = newScreenSharePC(sharerId, false);
+  ssIceAdded[sharerId]=new Set();
+  await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sd.offer)));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await set(ref(db,`rooms/${room}/ssSig/${pk}/answer`),JSON.stringify(answer));
+  listenScreenSharePairSignal(sharerId);
+}
+
+function listenScreenSharePairSignal(pid){
+  const pk = ssPairKey(myId,pid);
+  if(ssSigListeners[pk]) return;
+  ssSigListeners[pk]=true;
+  onValue(ref(db,`rooms/${room}/ssSig/${pk}`), async sn=>{
+    const sd=sn.val();if(!sd)return;
+    const pc=ssPCs[pid];if(!pc)return;
+    if(sd.answer&&!pc._answerSet){
+      try{await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sd.answer)));pc._answerSet=true;}catch(e){}
+    }
+    if(sd.ice){
+      if(!ssIceAdded[pid]) ssIceAdded[pid]=new Set();
+      for(const[k,cStr] of Object.entries(sd.ice)){
+        if(ssIceAdded[pid].has(k))continue;
+        try{const c=JSON.parse(cStr);if(c.from!==myId){await pc.addIceCandidate(new RTCIceCandidate(c.candidate));ssIceAdded[pid].add(k);}}catch(e){}
+      }
+    }
+  });
+}
+
+function newScreenSharePC(pid, isOfferer){
+  if(ssPCs[pid]){try{ssPCs[pid].close();}catch(e){}}
+  const pc = new RTCPeerConnection(ICE); ssPCs[pid]=pc;
+  const pk = ssPairKey(myId,pid);
+  pc.onicecandidate=e=>{
+    if(e.candidate&&room){
+      push(ref(db,`rooms/${room}/ssSig/${pk}/ice`),JSON.stringify({candidate:e.candidate.toJSON(),from:myId}));
+    }
+  };
+  pc.ontrack=e=>{
+    console.log('[ScreenShare] got remote track from',pid,'kind:',e.track.kind);
+    // Viewer: show the incoming screen share
+    const video = document.getElementById('ss-video');
+    video.srcObject = e.streams[0];
+    video.play().catch(()=>{});
+  };
+  pc.onconnectionstatechange=()=>{
+    if(['disconnected','failed','closed'].includes(pc.connectionState)){
+      delete ssPCs[pid]; delete ssIceAdded[pid];
+    }
+  };
+  return pc;
+}
+
+function showScreenShareOverlay(sharerName, stream, isLocal){
+  const overlay = document.getElementById('screen-share-overlay');
+  const video = document.getElementById('ss-video');
+  const nameEl = document.getElementById('ss-sharer-name');
+  const stopBtn = document.getElementById('ss-stop-btn');
+  const closeBtn = document.getElementById('ss-close-btn');
+  nameEl.textContent = sharerName;
+  if(stream) { video.srcObject = stream; video.play().catch(()=>{}); }
+  // Sharer sees Stop button, viewers see Close button
+  stopBtn.style.display = isLocal ? '' : 'none';
+  closeBtn.style.display = isLocal ? 'none' : '';
+  overlay.classList.add('show');
+}
+
+window.closeScreenShareViewer = ()=>{
+  const overlay = document.getElementById('screen-share-overlay');
+  overlay.classList.remove('show');
+  const video = document.getElementById('ss-video');
+  video.srcObject = null;
+};
+
+window.stopScreenShare = async()=>{
+  if(screenStream){
+    screenStream.getTracks().forEach(t=>t.stop());
+    screenStream = null;
+  }
+  screenSharing = false;
+  const btn = document.getElementById('btn-screen-share');
+  btn.classList.remove('sharing');
+  btn.title = 'Screen Share';
+  // Close overlay
+  document.getElementById('screen-share-overlay').classList.remove('show');
+  document.getElementById('ss-video').srcObject = null;
+  // Clean up peer connections
+  Object.keys(ssPCs).forEach(pid=>{
+    try{ssPCs[pid].close();}catch(e){}
+    const pk=ssPairKey(myId,pid);
+    if(ssSigListeners[pk]){off(ref(db,`rooms/${room}/ssSig/${pk}`));delete ssSigListeners[pk];}
+  });
+  ssPCs={}; ssIceAdded={};
+  if(room){
+    await remove(ref(db,`rooms/${room}/screenShare`));
+    await remove(ref(db,`rooms/${room}/ssSig`));
+    addSysMsg(`${myName} stopped screen sharing`);
+  }
+  notify('Screen share stopped','i');
+};
+
+// Listen for screen share events from other players
+function listenScreenShare(){
+  onValue(ref(db,`rooms/${room}/screenShare`), async sn=>{
+    const data = sn.val();
+    if(!data){
+      // Screen share ended — close viewer overlay
+      if(!screenSharing){
+        document.getElementById('screen-share-overlay').classList.remove('show');
+        document.getElementById('ss-video').srcObject = null;
+        // Clean up viewer PCs
+        Object.keys(ssPCs).forEach(pid=>{
+          try{ssPCs[pid].close();}catch(e){}
+          const pk=ssPairKey(myId,pid);
+          if(ssSigListeners[pk]){off(ref(db,`rooms/${room}/ssSig/${pk}`));delete ssSigListeners[pk];}
+        });
+        ssPCs={}; ssIceAdded={};
+      }
+      return;
+    }
+    // Someone else is sharing
+    if(data.sharer !== myId){
+      showScreenShareOverlay(data.sharerName, null, false);
+      gameNotify(`${data.sharerName} is sharing their screen! 🖥️`,'i');
+      // Try to answer the screen share offer
+      setTimeout(()=>answerScreenShareOffer(data.sharer), 1000);
+    }
+  });
+}
 
 // ── Auto-rejoin on page load if session exists ──
 (async()=>{
